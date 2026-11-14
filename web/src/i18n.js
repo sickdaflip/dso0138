@@ -183,7 +183,7 @@ const fr = {
 	step2: 'Fermez les cavaliers JP1 et JP2 (mode boot) et alimentez le DSO138 comme d’habitude.',
 	step3: 'Cliquez sur « Programmer » et choisissez le port de l’adaptateur.',
 	step4: 'Rouvrez les cavaliers et coupez puis rétablissez l’alimentation. Terminé.',
-	note: 'La prise mini USB du DSO138 sert uniquement à l’alimentation, sans lignes de données.',
+	note: 'La prise mini USB du DSO138 n’est pas câblée ; le bootloader du STM32 passe uniquement par l’UART de J5.',
 	phase_connect: 'Connexion au bootloader…',
 	phase_erase: 'Effacement de la flash…',
 	phase_unprotect: 'Suppression de la protection en lecture (effacement complet)…',
