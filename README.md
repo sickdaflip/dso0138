@@ -46,8 +46,10 @@ entry and **SEL** closes the menu.
 
 ## Flashing
 
-The DSO138 mini USB socket only supplies power. Flashing goes through the STM32
-serial bootloader on header **J5** with a 3.3 V USB-TTL adapter.
+The mini USB socket of the DSO138 has no function (JYE: "provided for future or
+user own use"), and the STM32F103 ROM bootloader cannot flash over USB anyway.
+Flashing goes through the STM32 serial bootloader on header **J5** with a
+3.3 V USB-TTL adapter.
 
 1. Connect the adapter to J5: GND to GND, adapter TX to RXD, adapter RX to TXD.
    Leave the adapter's 5 V unconnected and power the DSO138 as usual.
