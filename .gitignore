@@ -1,0 +1,7 @@
+.pio/
+.vscode/
+web/node_modules/
+web/dist/
+web/public/firmware/
+/sim
+*.ppm

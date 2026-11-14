@@ -1,0 +1,15 @@
+{
+  "name": "dso138-open-web",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node test/flash.test.mjs"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "~4.1.0",
+    "alpinejs": "^3.14.0",
+    "tailwindcss": "~4.1.0"
+  }
+}

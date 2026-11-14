@@ -1,0 +1,32 @@
+// SPDX-License-Identifier: MIT
+/**
+ * UI strings: English (US), English (UK), German, Spanish, French.
+ */
+#pragma once
+#include <stdint.h>
+
+enum Lang : uint8_t { LANG_EN_US, LANG_EN_GB, LANG_DE, LANG_ES, LANG_FR, LANG_COUNT };
+
+enum Str : uint8_t {
+	S_RUN, S_STOP, S_WAIT, S_ROLL, S_TRIG_D,
+	S_AUTO, S_NORMAL, S_SINGLE,
+	S_GND, S_AC, S_DC,
+	S_FREQ, S_VPP, S_VRMS, S_VAVG, S_DUTY, S_CLIPPED,
+	S_MENU, S_LANGUAGE, S_MEASUREMENTS, S_ZERO_CAL, S_CENTER, S_FACTORY, S_ABOUT, S_BACK,
+	S_ON, S_OFF,
+	S_ZERO_HINT1, S_ZERO_HINT2, S_ZERO_DONE,
+	S_CENTERED, S_RESET_DONE, S_SAVED,
+	S_HINT_SEL, S_HINT_OK,
+	S_FOCUS_TB, S_FOCUS_MODE, S_FOCUS_EDGE, S_FOCUS_LEVEL, S_FOCUS_VPOS, S_FOCUS_HPOS,
+	S_LICENSE,
+	STR_COUNT
+};
+
+namespace I18n {
+
+void set(uint8_t lang);
+uint8_t get();
+const char *tr(Str s);
+const char *langName(uint8_t lang);
+
+}  // namespace I18n
