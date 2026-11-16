@@ -177,10 +177,18 @@ select the range. Settings live in flash page 63 (0x0800FC00).
 
 ## Status
 
-1.0.0, tested on a 109-13800-00C board: display, timer modes, trigger,
-measurements, zero calibration, flasher (including jumper-free updates) and
-live view work. The interleaved 10/20 µs/div
-mode and roll mode still need more real-world testing.
+Tested on a 109-13800-00C board with the built-in signal generator and the
+live view CSV export:
+
+| Test | Result |
+| --- | --- |
+| Square 100 kHz at 10 µs/div (interleaved ADCs) | 100.009 kHz, period 9.96 – 10.05 µs, duty 50.2 % |
+| UART 9600 Bd at 1 ms/div, Normal, falling edge | "Hello DSO138!\r\n" decoded without errors, frame 15.50 ms (15.52 ms expected) |
+| Burst 5 kHz × 6, Single, holdoff 1 ms | always triggers on the first pulse, burst spacing 4.8 ms |
+| Glitch 20 µs at 500 µs/div | one glitch every 10 ms, centered in the low phase |
+| Test signal 1 kHz at 1 V/div after zero calibration | 1.00 kHz, 3.28 Vpp, 50 % |
+| Roll mode 200 ms/div | smooth on the display and in the live view |
+| Flasher, jumper-free updates, remote control both ways | working |
 
 ## License
 
