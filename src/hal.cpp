@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 #include "hal.h"
+#include "buttons.h"
 
 namespace {
 
@@ -10,10 +11,17 @@ constexpr uint16_t RX_SIZE = 128;
 volatile uint8_t rxBuf[RX_SIZE];
 volatile uint16_t rxHead = 0, rxTail = 0;
 
+// USART1 transmit ring buffer: a whole waveform frame fits, so streaming
+// does not block the main loop.
+constexpr uint16_t TX_SIZE = 6144;
+volatile uint8_t txBuf[TX_SIZE];
+volatile uint16_t txHead = 0, txTail = 0;
+
 }  // namespace
 
 extern "C" void SysTick_Handler() {
 	ticks++;
+	Buttons::tick(ticks);
 }
 
 extern "C" void USART1_IRQHandler() {
@@ -26,6 +34,14 @@ extern "C" void USART1_IRQHandler() {
 		}
 	}
 	if (USART1->SR & USART_SR_ORE) (void)USART1->DR;
+	if ((USART1->CR1 & USART_CR1_TXEIE) && (USART1->SR & USART_SR_TXE)) {
+		if (txHead == txTail) {
+			USART1->CR1 &= ~USART_CR1_TXEIE;
+		} else {
+			USART1->DR = txBuf[txTail];
+			txTail = (txTail + 1) % TX_SIZE;
+		}
+	}
 }
 
 namespace hal {
@@ -130,8 +146,7 @@ void led(bool on) {
 constexpr uint16_t BOOT_MAGIC = 0xB007;
 
 void enterBootloader() {
-	// Let the last reply leave the UART
-	while (!(USART1->SR & USART_SR_TC)) {}
+	serialFlush();  // let the last reply leave the UART
 	RCC->APB1ENR |= RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN;
 	PWR->CR |= PWR_CR_DBP;
 	BKP->DR1 = BOOT_MAGIC;
@@ -170,8 +185,16 @@ void serialInit(uint32_t baud) {
 }
 
 void serialPutc(char c) {
-	while (!(USART1->SR & USART_SR_TXE)) {}
-	USART1->DR = uint8_t(c);
+	uint16_t n = (txHead + 1) % TX_SIZE;
+	while (n == txTail) {}  // buffer full: wait for the interrupt to drain it
+	txBuf[txHead] = uint8_t(c);
+	txHead = n;
+	USART1->CR1 |= USART_CR1_TXEIE;
+}
+
+void serialFlush() {
+	while (txHead != txTail) {}
+	while (!(USART1->SR & USART_SR_TC)) {}
 }
 
 void serialWrite(const char *s) {

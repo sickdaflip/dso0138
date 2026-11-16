@@ -438,8 +438,9 @@ void handleKey(Key k) {
 
 	case SCR_MENU:
 		switch (k) {
-		case KEY_PLUS: menuSel = (menuSel + 1) % MI_COUNT; drawMenu(); break;
-		case KEY_MINUS: menuSel = (menuSel + MI_COUNT - 1) % MI_COUNT; drawMenu(); break;
+		// + sits above - on the board: + moves up, - moves down
+		case KEY_PLUS: menuSel = (menuSel + MI_COUNT - 1) % MI_COUNT; drawMenu(); break;
+		case KEY_MINUS: menuSel = (menuSel + 1) % MI_COUNT; drawMenu(); break;
 		case KEY_OK: menuActivate(); break;
 		case KEY_SEL:
 		case KEY_OK_LONG: openScope(); break;

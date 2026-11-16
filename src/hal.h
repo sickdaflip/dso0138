@@ -53,6 +53,8 @@ void serialInit(uint32_t baud);
 void serialWrite(const char *s);
 void serialWrite(const uint8_t *data, size_t len);
 void serialPutc(char c);
+/** Waits until everything queued has been sent. */
+void serialFlush();
 /** Returns -1 if nothing was received. */
 int serialRead();
 

@@ -11,7 +11,10 @@ namespace Buttons {
 
 void begin();
 
-/** Call every millisecond or faster; returns at most one event per call. */
+/** Samples the buttons; called from the 1 ms SysTick interrupt. */
+void tick(uint32_t now);
+
+/** Next queued event, KEY_NONE if there is none. */
 Key poll(uint32_t now);
 
 /** Number of auto repeats of the key being held (for acceleration). */
