@@ -129,6 +129,10 @@ void putFloat(float v) {
 		while (v < 1.0f) { v *= 10.0f; exp--; }
 	}
 	uint32_t mant = uint32_t(v * 1000000.0f + 0.5f);
+	if (mant >= 10000000) {  // 9.9999999 rounded up to 10.000000
+		mant /= 10;
+		exp++;
+	}
 	char *p = buf;
 	if (neg) *p++ = '-';
 	*p++ = char('0' + mant / 1000000);

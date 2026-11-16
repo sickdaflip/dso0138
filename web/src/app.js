@@ -208,6 +208,9 @@ Alpine.data('dso', () => ({
 		await link.open(115200);
 		const parser = new FrameParser(
 			(f) => {
+				// older firmware could send an unreadable timebase; use the
+				// timebase from the device state instead
+				if (!Number.isFinite(f.tdiv) && this.dev) f.tdiv = TIMEBASES[this.dev.tb];
 				this.frameCount++;
 				this.frame = f;
 				this.stats = measure(f);
