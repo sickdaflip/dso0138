@@ -63,10 +63,19 @@ struct Settings {
 	int16_t zero[RANGE_COUNT];       // ADC count at 0 V for each range
 	uint8_t showMeasurements;
 	uint8_t traceColor;              // index into the trace palette
-	uint8_t reserved[2];
+	uint8_t holdoff;                 // index into HOLDOFF_S, 0 = off
+	uint8_t reserved[1];
 };
 
 void settingsDefaults(Settings &s);
+
+/**
+ * Trigger holdoff: the signal must have stayed on the far side of the
+ * trigger level for at least this long before the edge counts. This picks
+ * the first edge of a burst or of a serial frame.
+ */
+constexpr uint8_t HOLDOFF_COUNT = 17;
+extern const float HOLDOFF_S[HOLDOFF_COUNT];
 
 /** Trace colors selectable in the settings menu (white is the default). */
 constexpr uint8_t TRACE_COLOR_COUNT = 6;

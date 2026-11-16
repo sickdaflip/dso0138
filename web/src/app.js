@@ -13,6 +13,8 @@ const ORIGINAL = 'firmware/original/113-13801-061.hex';
 const TIMEBASES = [10e-6, 20e-6, 50e-6, 100e-6, 200e-6, 500e-6, 1e-3, 2e-3, 5e-3, 10e-3, 20e-3,
 	50e-3, 100e-3, 200e-3, 500e-3, 1, 2, 5, 10];
 const RANGES = [5, 2, 1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01];
+const HOLDOFFS = [0, 10e-6, 20e-6, 50e-6, 100e-6, 200e-6, 500e-6, 1e-3, 2e-3, 5e-3, 10e-3, 20e-3,
+	50e-3, 100e-3, 200e-3, 500e-3, 1];
 const DEVICE_LANGS = ['English (US)', 'English (UK)', 'Deutsch', 'Español', 'Français'];
 
 Alpine.data('dso', () => ({
@@ -42,6 +44,7 @@ Alpine.data('dso', () => ({
 	genDesc: ['', ''],
 	TIMEBASES,
 	RANGES,
+	HOLDOFFS,
 	DEVICE_LANGS,
 	TRACE_COLORS,
 	frameCount: 0,

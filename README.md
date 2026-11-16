@@ -19,7 +19,9 @@ Written from scratch and MIT licensed.
   interleaved at about 1.7 MS/s.
 - Roll mode in Auto from 100 ms/div up.
 - Trigger: Auto, Normal and Single, rising or falling edge, adjustable level
-  with hysteresis and adjustable trigger position (pre-trigger up to half the
+  with hysteresis, holdoff (10 µs – 1 s: the signal must stay on the far
+  side of the level that long before an edge counts, so bursts and serial
+  frames trigger on their first edge) and adjustable trigger position (pre-trigger up to half the
   1024-sample frame). When stopped, the position control scrolls through the
   captured frame.
 - Automatic measurements: frequency, Vpp, Vrms and duty cycle; clipping warning.
@@ -39,7 +41,7 @@ Written from scratch and MIT licensed.
 
 | Button | Short press | Long press |
 | --- | --- | --- |
-| **SEL** | Next parameter: timebase → trigger mode → edge → level → vertical position → trigger position | Reset the selected parameter |
+| **SEL** | Next parameter: timebase → trigger mode → edge → level → holdoff → vertical position → trigger position | Reset the selected parameter |
 | **– / +** | Change the selected parameter (hold to repeat, accelerates) | |
 | **OK** | Run / Stop (re-arms in Single mode) | Settings menu |
 
@@ -133,8 +135,8 @@ Serial commands (115200 8N1, line based):
 | `m` | `#meas freq=… vpp=… vrms=… vavg=… vmax=… vmin=… duty=…` |
 | `s1` / `s0` | Stream frames on / off |
 | `boot` | `#boot`, then restart into the STM32 serial bootloader (115200 8E1) |
-| `state` | `#state tb=… mode=… edge=… level=… vpos=… hpos=… run=… meas=… color=… lang=… range=… cpl=… gen=… gn=… gp0=… gp1=… gs0=… gs1=… vpc=…`, then `#gd0 <text>` / `#gd1 <text>` with the generator parameters |
-| `set <key> <n>` | Sets `tb`, `mode`, `edge`, `level`, `vpos`, `hpos`, `meas`, `color` or `lang` (values as in `#state`), answers `#state` |
+| `state` | `#state tb=… mode=… edge=… level=… holdoff=… vpos=… hpos=… run=… meas=… color=… lang=… range=… cpl=… gen=… gn=… gp0=… gp1=… gs0=… gs1=… vpc=…`, then `#gd0 <text>` / `#gd1 <text>` with the generator parameters |
+| `set <key> <n>` | Sets `tb`, `mode`, `edge`, `level`, `holdoff`, `vpos`, `hpos`, `meas`, `color` or `lang` (values as in `#state`), answers `#state` |
 | `run 0` / `run 1` | Stop / run |
 | `center` | Trace and trigger back to the center |
 | `gen <mode>` / `genp <which> <step>` | Generator mode (0–9) / parameter step |

@@ -75,6 +75,15 @@ View view() {
 	return v;
 }
 
+void holdoffText(char *buf, size_t len) {
+	if (cfg.holdoff == 0 || cfg.holdoff >= HOLDOFF_COUNT) {
+		strncpy(buf, I18n::tr(S_OFF), len - 1);
+		buf[len - 1] = 0;
+	} else {
+		Measure::formatDiv(buf, len, HOLDOFF_S[cfg.holdoff], "s");
+	}
+}
+
 void markDirty() {
 	dirty = true;
 	dirtySince = hal::millis();
@@ -401,6 +410,15 @@ void adjust(int8_t dir) {
 		cfg.trigLevel = clampT<int16_t>(cfg.trigLevel + dir * 4 * accel(), -LEVEL_LIMIT, LEVEL_LIMIT);
 		restart = true;
 		break;
+	case FOCUS_HOLDOFF: {
+		int16_t h = clampT<int16_t>(cfg.holdoff + dir, 0, HOLDOFF_COUNT - 1);
+		if (h == cfg.holdoff) return;
+		cfg.holdoff = uint8_t(h);
+		holdoffText(buf, sizeof buf);
+		showHint2(I18n::tr(S_FOCUS_HOLDOFF), buf);
+		restart = true;
+		break;
+	}
 	case FOCUS_VPOS:
 		cfg.vpos = clampT<int16_t>(cfg.vpos + dir * accel(), -VPOS_LIMIT, VPOS_LIMIT);
 		Measure::format(buf, sizeof buf, cfg.vpos * RANGE_VDIV[range] / DIV_PX, "V");
@@ -424,6 +442,7 @@ void adjust(int8_t dir) {
 void resetFocused() {
 	switch (focus) {
 	case FOCUS_LEVEL: cfg.trigLevel = 0; break;
+	case FOCUS_HOLDOFF: cfg.holdoff = 0; break;
 	case FOCUS_VPOS: cfg.vpos = 0; break;
 	case FOCUS_HPOS: cfg.hpos = 0; break;
 	case FOCUS_TIMEBASE: cfg.timebase = TB_DEFAULT; break;
@@ -445,11 +464,18 @@ void handleKey(Key k) {
 		case KEY_SEL: {
 			focus = Focus((focus + 1) % FOCUS_COUNT);
 			static const Str NAMES[FOCUS_COUNT] = {S_FOCUS_TB, S_FOCUS_MODE, S_FOCUS_EDGE,
-			                                       S_FOCUS_LEVEL, S_FOCUS_VPOS, S_FOCUS_HPOS};
+			                                       S_FOCUS_LEVEL, S_FOCUS_HOLDOFF, S_FOCUS_VPOS,
+			                                       S_FOCUS_HPOS};
 			View v = view();
 			Ui::status(v);
 			Ui::markers(v);
-			showHint(I18n::tr(NAMES[focus]));
+			if (focus == FOCUS_HOLDOFF) {
+				char buf[16];
+				holdoffText(buf, sizeof buf);
+				showHint2(I18n::tr(NAMES[focus]), buf);
+			} else {
+				showHint(I18n::tr(NAMES[focus]));
+			}
 			break;
 		}
 		case KEY_SEL_LONG: resetFocused(); break;
@@ -520,7 +546,7 @@ void handleKey(Key k) {
 // ---------------------------------------------------------------------------
 // Remote control (web interface)
 //   state                -> "#state key=value ..." and "#gd0/#gd1 <text>"
-//   set <key> <value>    -> tb, mode, edge, level, vpos, hpos, meas, color,
+//   set <key> <value>    -> tb, mode, edge, level, holdoff, vpos, hpos, meas, color,
 //                           lang (numbers as in #state), then "#state"
 //   run 0|1, center
 //   gen <mode>, genp <which> <step>
@@ -539,6 +565,7 @@ void sendState() {
 	putKV("mode", cfg.trigMode);
 	putKV("edge", cfg.trigEdge);
 	putKV("level", cfg.trigLevel);
+	putKV("holdoff", cfg.holdoff);
 	putKV("vpos", cfg.vpos);
 	putKV("hpos", cfg.hpos);
 	putKV("run", running);
@@ -659,6 +686,9 @@ bool remoteCommand(const char *c) {
 		restart = true;
 	} else if (!strcmp(key, "level")) {
 		cfg.trigLevel = int16_t(clampT<int32_t>(v, -LEVEL_LIMIT, LEVEL_LIMIT));
+		restart = true;
+	} else if (!strcmp(key, "holdoff")) {
+		cfg.holdoff = uint8_t(clampT<int32_t>(v, 0, HOLDOFF_COUNT - 1));
 		restart = true;
 	} else if (!strcmp(key, "vpos")) {
 		cfg.vpos = int16_t(clampT<int32_t>(v, -VPOS_LIMIT, VPOS_LIMIT));

@@ -32,6 +32,8 @@ float dt = 0;
 uint32_t scanned = 0;      // cumulative index of the next sample to check
 uint32_t trigAt = 0;       // cumulative index of the trigger sample
 bool armed = false;
+uint32_t holdoffSamples = 0;
+uint32_t lastActive = 0;   // last sample index on the trigger's far side
 bool forced = false;
 uint32_t armedSince = 0;
 uint32_t autoTimeoutMs = 100;
@@ -135,15 +137,20 @@ void startFastMode() {
 	ADC1->CR2 |= ADC_CR2_SWSTART;
 }
 
-bool crosses(int16_t v) {
-	if (edge == EDGE_RISING) {
-		if (v < level - HYST) armed = true;
-		else if (armed && v >= level) { armed = false; return true; }
-	} else {
-		if (v > level + HYST) armed = true;
-		else if (armed && v <= level) { armed = false; return true; }
-	}
-	return false;
+/**
+ * Edge detector with hysteresis and holdoff. `idx` is the sample index; a
+ * trigger needs the signal to have stayed away from the trigger side for
+ * `holdoffSamples` before the edge.
+ */
+bool crosses(int16_t v, uint32_t idx) {
+	bool active = edge == EDGE_RISING ? v >= level : v <= level;
+	bool away = edge == EDGE_RISING ? v < level - HYST : v > level + HYST;
+	if (away) armed = true;
+	if (!active) return false;
+	bool fire = armed && idx - lastActive >= holdoffSamples;
+	lastActive = idx;
+	if (fire) armed = false;
+	return fire;
 }
 
 void buildFrame(const uint16_t *src, uint32_t mask, uint32_t first, uint16_t trig, bool triggered) {
@@ -217,6 +224,7 @@ void start(const Settings &s, int16_t lvl, Range r, Coupling c, int16_t zero) {
 	fast = s.timebase <= TB_FAST_LAST;
 	roll = !fast && mode == TRIG_AUTO && s.timebase >= TB_ROLL_FIRST;
 	dt = fast ? FAST_DT : TIMEBASE_S[s.timebase] / SAMPLES_PER_DIV;
+	holdoffSamples = uint32_t(HOLDOFF_S[s.holdoff < HOLDOFF_COUNT ? s.holdoff : 0] / dt + 0.5f);
 	fr.range = r;
 	fr.coupling = c;
 	fr.zero = zero;
@@ -224,6 +232,7 @@ void start(const Settings &s, int16_t lvl, Range r, Coupling c, int16_t zero) {
 	scanned = 0;
 	armed = false;
 	forced = false;
+	lastActive = 0;
 	// Auto fires after 1.5 screens or 80 ms, whichever is longer
 	autoTimeoutMs = uint32_t(TIMEBASE_S[s.timebase] * GRID_DIVS_X * 1500.0f);
 	if (autoTimeoutMs < 80) autoTimeoutMs = 80;
@@ -284,9 +293,10 @@ bool poll(uint32_t now) {
 			// Swap the halves so the samples are in time order.
 			for (uint16_t i = 0; i < RING / 2; i++) ring.w[i] = (ring.w[i] >> 16) | (ring.w[i] << 16);
 			armed = false;
+			lastActive = 0;
 			int32_t found = -1;
 			for (uint16_t i = 1; i <= RING - POST; i++) {
-				if (crosses(int16_t(ring.s[i])) && i >= FRAME_PRE) { found = i; break; }
+				if (crosses(int16_t(ring.s[i]), i) && i >= FRAME_PRE) { found = i; break; }
 			}
 			bool timeout = now - armedSince >= autoTimeoutMs;
 			if (found < 0 && !(mode == TRIG_AUTO && timeout)) {
@@ -305,11 +315,12 @@ bool poll(uint32_t now) {
 			if (total < FRAME_PRE) return false;
 			st = ACQ_ARMED;
 			scanned = total;
+			lastActive = total;  // holdoff counts from arming
 			armedSince = now;
 		}
 		while (scanned < total) {
 			int16_t v = int16_t(ring.s[scanned & (RING - 1)]);
-			if (crosses(v)) {
+			if (crosses(v, scanned)) {
 				trigAt = scanned;
 				st = ACQ_POST;
 				break;

@@ -261,6 +261,14 @@
 							@input="dev && (dev.level = Number($event.target.value))" @change="set('level', $event.target.value)"
 							class="w-full accent-orange-500">
 					</label>
+					<label class="block">
+						<span class="mb-1 block text-xs text-gray-500 dark:text-neutral-400" x-text="t('holdoff')"></span>
+						<select @change="set('holdoff', $event.target.value)" class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900">
+							<template x-for="(h, i) in HOLDOFFS" :key="i">
+								<option :value="i" :selected="dev?.holdoff === i" x-text="i ? si(h, 's', 1) : t('off')"></option>
+							</template>
+						</select>
+					</label>
 				</div>
 
 				<!-- Position and display -->
