@@ -93,6 +93,7 @@ struct Frame {
 	float dt;            // seconds between samples
 	bool triggered;      // false when Auto forced the capture
 	bool roll;           // roll mode: newest sample is s[n-1], right aligned
+	uint32_t total;      // roll mode: samples taken since the start (s[n-1] is total-1)
 	Range range;
 	Coupling coupling;
 	int16_t zero;

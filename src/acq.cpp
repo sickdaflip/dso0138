@@ -279,6 +279,7 @@ bool poll(uint32_t now) {
 		fr.dt = dt;
 		fr.triggered = false;
 		fr.roll = true;
+		fr.total = total;
 		return true;
 	}
 

@@ -131,7 +131,7 @@ Serial commands (115200 8N1, line based):
 | Command | Response |
 | --- | --- |
 | `i` | Firmware name and version |
-| `w` | `#frame dt=… n=… trig=… zero=… vpc=… vdiv=… tdiv=… cpl=… roll=… col=…`, raw ADC counts (32 per line), `#end` |
+| `w` | `#frame dt=… n=… append=… trig=… zero=… vpc=… vdiv=… tdiv=… cpl=… roll=… col=…`, raw ADC counts (32 per line), `#end` |
 | `m` | `#meas freq=… vpp=… vrms=… vavg=… vmax=… vmin=… duty=…` |
 | `s1` / `s0` | Stream frames on / off |
 | `boot` | `#boot`, then restart into the STM32 serial bootloader (115200 8E1) |
@@ -144,7 +144,9 @@ Serial commands (115200 8N1, line based):
 The device also sends `#state` whenever something changes on it (buttons,
 slide switches, a finished single shot), so the web interface stays in sync.
 
-Volts = (count − zero) × vpc. Time of sample *i* = (i − trig) × dt.
+Volts = (count − zero) × vpc. Time of sample *i* = (i − trig) × dt. While
+streaming in roll mode, frames come every 100 ms with `append=1` and only the
+new samples; append them to the previous ones (one screen is 300 samples).
 
 ## Building
 

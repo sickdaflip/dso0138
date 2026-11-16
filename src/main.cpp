@@ -26,6 +26,7 @@ constexpr uint32_t SAVE_DELAY_MS = 2000;
 constexpr uint32_t HINT_MS = 1500;
 constexpr uint32_t WAIT_SHOW_MS = 150;
 constexpr uint32_t STREAM_MS = 500;
+constexpr uint32_t STREAM_ROLL_MS = 100;  // roll mode streams only new samples
 constexpr int16_t HPOS_LIMIT = 350;
 constexpr int16_t VPOS_LIMIT = 120;
 constexpr int16_t LEVEL_LIMIT = 400;
@@ -54,6 +55,7 @@ uint16_t zeroDone = 0;
 int8_t zeroStableRange = -1;
 
 bool streaming = false;
+uint32_t rollSent = 0;  // roll mode: cumulative samples already streamed
 uint32_t lastStream = 0;
 char cmd[40];
 uint8_t cmdLen = 0;
@@ -101,6 +103,7 @@ void showHint2(const char *label, const char *value) {
 
 void startCapture() {
 	captureStart = hal::millis();
+	rollSent = 0;  // the next roll frame goes out complete
 	int16_t lvl = cfg.zero[range] + cfg.trigLevel;
 	Acq::start(cfg, lvl, range, coupling, cfg.zero[range]);
 }
@@ -169,12 +172,29 @@ void putInt(int32_t v) {
 	hal::serialWrite(p);
 }
 
-void sendFrame() {
+/**
+ * Sends the frame. In roll mode while streaming, only the samples that are
+ * new since the last call are sent with append=1; the host appends them.
+ */
+void sendFrame(bool incremental = false) {
 	const Frame &f = Acq::frame();
+	uint16_t first = 0;
+	bool append = false;
+	if (incremental && f.roll && f.total >= rollSent && rollSent > 0) {
+		uint32_t fresh = f.total - rollSent;
+		if (fresh == 0) return;
+		if (fresh < f.n) {
+			first = uint16_t(f.n - fresh);
+			append = true;
+		}
+	}
+	if (f.roll) rollSent = f.total;
 	hal::serialWrite("#frame dt=");
 	putFloat(f.dt);
 	hal::serialWrite(" n=");
-	putInt(f.n);
+	putInt(f.n - first);
+	hal::serialWrite(" append=");
+	putInt(append);
 	hal::serialWrite(" trig=");
 	putInt(f.trig);
 	hal::serialWrite(" zero=");
@@ -194,9 +214,9 @@ void sendFrame() {
 	hal::serialWrite(" color=");
 	putInt(cfg.traceColor);
 	hal::serialWrite("\r\n");
-	for (uint16_t i = 0; i < f.n; i++) {
+	for (uint16_t i = first; i < f.n; i++) {
 		putInt(f.s[i]);
-		hal::serialPutc((i % 32 == 31 || i == f.n - 1) ? '\n' : ',');
+		hal::serialPutc(((i - first) % 32 == 31 || i == f.n - 1) ? '\n' : ',');
 	}
 	hal::serialWrite("#end\r\n");
 }
@@ -752,9 +772,9 @@ void onFrame(uint32_t now) {
 	Ui::trace(v);
 	Ui::markers(v);
 	if (screen == SCR_SCOPE && int32_t(now - hintUntil) >= 0) Ui::measurements(v);
-	if (streaming && now - lastStream >= STREAM_MS) {
+	if (streaming && now - lastStream >= (f.roll ? STREAM_ROLL_MS : STREAM_MS)) {
 		lastStream = now;
-		sendFrame();
+		sendFrame(true);
 	}
 	if (f.roll) return;
 	if (dirty && now - dirtySince >= SAVE_DELAY_MS) {

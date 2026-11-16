@@ -214,6 +214,14 @@ Alpine.data('dso', () => ({
 				// older firmware could send an unreadable timebase; use the
 				// timebase from the device state instead
 				if (!Number.isFinite(f.tdiv) && this.dev) f.tdiv = TIMEBASES[this.dev.tb];
+				// Roll mode streams only the new samples (append=1): add them to
+				// the visible window, which holds one screen of 300 samples.
+				if (f.append) {
+					const prev = this.frame;
+					if (!prev || !prev.roll || prev.dt !== f.dt) return;  // wait for a full frame
+					f.samples = prev.samples.concat(f.samples).slice(-300);
+					f.n = f.samples.length;
+				}
 				this.frameCount++;
 				this.frame = f;
 				this.stats = measure(f);
