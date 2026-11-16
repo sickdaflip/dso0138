@@ -111,6 +111,8 @@ int main(int argc, char **argv) {
 
 	Ui::splash(cfg.traceColor);
 	snprintf(path, sizeof path, "%s/01_boot.ppm", dir); save(path);
+	Ui::bootScreen();
+	snprintf(path, sizeof path, "%s/08_bootloader.ppm", dir); save(path);
 
 	// 1 kHz test signal (3.3 V square) at 1 V/div, 0.2 ms/div
 	cfg.timebase = 4;

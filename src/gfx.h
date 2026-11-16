@@ -32,6 +32,13 @@ void roundRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t fill, uint16
 int16_t badge(const TextFont &f, const char *s, int16_t x, int16_t y, int16_t minW,
               uint16_t fg, uint16_t fill, uint16_t outside);
 
+/**
+ * Draws a 4-bit alpha run-length encoded mask (see tools/gen_logo.py) in
+ * `fg` over `bg`.
+ */
+void rle4(const uint8_t *data, int16_t x, int16_t y, int16_t w, int16_t h, uint16_t fg,
+          uint16_t bg);
+
 /** Solid triangle marker pointing left/right/up/down. */
 enum Dir : uint8_t { DIR_LEFT, DIR_RIGHT, DIR_UP, DIR_DOWN };
 void marker(int16_t x, int16_t y, uint8_t size, Dir d, uint16_t c, uint16_t bg);

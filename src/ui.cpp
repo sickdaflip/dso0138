@@ -6,6 +6,7 @@
 #include "fonts.h"
 #include "gfx.h"
 #include "i18n.h"
+#include "logo.h"
 #include "tft.h"
 
 namespace {
@@ -144,18 +145,21 @@ int16_t triggerColumn(const Settings &s) {
 }
 
 void splash(uint8_t color) {
+	(void)color;
 	Tft::fillScreen(C_BG);
-	const int16_t y = 84;
-	Gfx::textBox(FONT_L, "DSO138", 0, y, LCD_W, ALIGN_CENTER, C_WHITE, C_BG);
-	Gfx::textBox(FONT_M, "Open Firmware " FW_VERSION, 0, y + 30, LCD_W, ALIGN_CENTER,
+	const int16_t y = 10;
+	Gfx::rle4(LOGO_RLE, (LCD_W - LOGO_W) / 2, y, LOGO_W, LOGO_H, C_WHITE, C_BG);
+	Gfx::textBox(FONT_M, "DSO138 Open " FW_VERSION, 0, y + LOGO_H + 12, LCD_W, ALIGN_CENTER,
 	             C_SUBTLE, C_BG);
-	Gfx::textBox(FONT_S, I18n::tr(S_LICENSE), 0, y + 52, LCD_W, ALIGN_CENTER, C_MUTED, C_BG);
-	// small sine accent
-	static const int8_t WAVE[] = {0, 3, 5, 6, 5, 3, 0, -3, -5, -6, -5, -3};
-	for (int16_t x = 0; x < 96; x++) {
-		int16_t yy = y - 18 + WAVE[x % 12];
-		Tft::fillRect(LCD_W / 2 - 48 + x, yy, 1, 2, traceColor(color));
-	}
+	Gfx::textBox(FONT_S, I18n::tr(S_LICENSE), 0, y + LOGO_H + 34, LCD_W, ALIGN_CENTER, C_MUTED,
+	             C_BG);
+}
+
+void bootScreen() {
+	Tft::fillScreen(C_BG);
+	const int16_t y = 14;
+	Gfx::rle4(LOGO_RLE, (LCD_W - LOGO_W) / 2, y, LOGO_W, LOGO_H, C_WHITE, C_BG);
+	Gfx::textBox(FONT_M, "Bootloader", 0, y + LOGO_H + 16, LCD_W, ALIGN_CENTER, C_SUBTLE, C_BG);
 }
 
 void layout() {

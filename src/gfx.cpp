@@ -145,6 +145,22 @@ int16_t badge(const TextFont &f, const char *s, int16_t x, int16_t y, int16_t mi
 	return w;
 }
 
+void rle4(const uint8_t *data, int16_t x, int16_t y, int16_t w, int16_t h, uint16_t fg,
+          uint16_t bg) {
+	uint16_t pal[16];
+	for (uint8_t i = 0; i < 16; i++) pal[i] = blend(bg, fg, uint8_t(i * 17));
+	uint32_t left = uint32_t(w) * h;
+	Tft::window(x, y, x + w - 1, y + h - 1);
+	while (left) {
+		uint8_t b = *data++;
+		uint32_t run = (b & 15) + 1;
+		if (run > left) run = left;
+		Tft::pushN(pal[b >> 4], run);
+		left -= run;
+	}
+	Tft::end();
+}
+
 void marker(int16_t x, int16_t y, uint8_t size, Dir d, uint16_t c, uint16_t bg) {
 	// The marker occupies a (size+1) x (2*size+1) box (or transposed) whose
 	// tip sits at (x, y).

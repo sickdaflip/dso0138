@@ -29,6 +29,9 @@ namespace Ui {
 
 void splash(uint8_t traceColor);
 
+/** Shown while the device restarts into the STM32 bootloader. */
+void bootScreen();
+
 /** Clears the screen and draws the static layout; forgets the old trace. */
 void layout();
 

@@ -252,8 +252,7 @@ void handleCommand(const char *c) {
 		sendMeasurements();
 	} else if (!strcmp(c, "boot")) {
 		Acq::stop();
-		Tft::fillScreen(0);
-		Ui::hint("Bootloader");
+		Ui::bootScreen();
 		hal::serialWrite("#boot\r\n");
 		hal::enterBootloader();
 	} else if (!strcmp(c, "s1")) {

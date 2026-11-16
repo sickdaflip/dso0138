@@ -4,13 +4,13 @@ New open source firmware for the **JYE Tech DSO138** pocket oscilloscope
 (STM32F103C8, 2.4" 320×240 ILI9341 TFT, kits 13803K/13804K, main board 109-13800-00C).
 Written from scratch and MIT licensed.
 
-![Preview](docs/images/02_square.png)
+![Boot screen](docs/images/01_boot.png) ![Preview](docs/images/02_square.png)
 
 | | |
 | --- | --- |
 | ![Sine](docs/images/03_sine.png) | ![Stopped, trigger position moved](docs/images/04_triangle_stop.png) |
 | ![Settings](docs/images/05_menu.png) | ![Zero calibration](docs/images/06_zero_cal.png) |
-| ![Signal generator](docs/images/07_generator.png) | |
+| ![Signal generator](docs/images/07_generator.png) | ![Bootloader](docs/images/08_bootloader.png) |
 
 ## Features
 
@@ -147,6 +147,12 @@ slide switches, a finished single shot), so the web interface stays in sync.
 Volts = (count − zero) × vpc. Time of sample *i* = (i − trig) × dt. While
 streaming in roll mode, frames come every 100 ms with `append=1` and only the
 new samples; append them to the previous ones (one screen is 300 samples).
+
+## Logo
+
+The boot and bootloader screens show the FlipDev logo from
+`assets/flipdev.svg`, converted by `tools/gen_logo.py` into a 4-bit alpha mask
+with run-length encoding (`src/logo.h`, about 3.5 KB) and drawn in white.
 
 ## Building
 
