@@ -127,36 +127,35 @@ void led(bool on) {
 	else pinLow(LED_PORT, LED_PIN);
 }
 
+constexpr uint16_t BOOT_MAGIC = 0xB007;
+
 void enterBootloader() {
 	// Let the last reply leave the UART
 	while (!(USART1->SR & USART_SR_TC)) {}
-	__disable_irq();
-	SysTick->CTRL = 0;
-	for (uint8_t i = 0; i < 8; i++) {
-		NVIC->ICER[i] = 0xFFFFFFFF;
-		NVIC->ICPR[i] = 0xFFFFFFFF;
-	}
-	// Peripherals back to reset state
-	RCC->APB1RSTR = 0xFFFFFFFF;
-	RCC->APB1RSTR = 0;
-	RCC->APB2RSTR = 0xFFFFFFFF;
-	RCC->APB2RSTR = 0;
-	DMA1_Channel1->CCR = 0;
-	// Clock tree back to HSI, PLL and HSE off
-	RCC->CR |= RCC_CR_HSION;
-	while (!(RCC->CR & RCC_CR_HSIRDY)) {}
-	RCC->CFGR = 0;
-	while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI) {}
-	RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_HSEON);
-	RCC->CIR = 0x009F0000;  // clear clock interrupt flags
-	FLASH->ACR = FLASH_ACR_PRFTBE;
+	RCC->APB1ENR |= RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN;
+	PWR->CR |= PWR_CR_DBP;
+	BKP->DR1 = BOOT_MAGIC;
+	NVIC_SystemReset();
+}
 
+void bootCheck() {
+	RCC->APB1ENR |= RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN;
+	if (BKP->DR1 != BOOT_MAGIC) {
+		RCC->APB1ENR &= ~(RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN);
+		return;
+	}
+	PWR->CR |= PWR_CR_DBP;
+	BKP->DR1 = 0;
+	PWR->CR &= ~PWR_CR_DBP;
+	RCC->APB1ENR &= ~(RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN);
+
+	// The chip is in its reset state (HSI, no peripherals): start the ROM
+	// bootloader exactly like the hardware does with BOOT0 high.
 	constexpr uint32_t SYSMEM = 0x1FFFF000;
 	const uint32_t sp = *reinterpret_cast<const volatile uint32_t *>(SYSMEM);
 	const uint32_t pc = *reinterpret_cast<const volatile uint32_t *>(SYSMEM + 4);
 	SCB->VTOR = SYSMEM;
 	__set_MSP(sp);
-	__enable_irq();
 	reinterpret_cast<void (*)()>(pc)();
 	for (;;) {}
 }

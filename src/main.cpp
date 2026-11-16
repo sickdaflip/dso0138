@@ -516,6 +516,7 @@ void onZeroFrame() {
 }  // namespace
 
 int main() {
+	hal::bootCheck();  // jumps to the ROM bootloader after a "boot" request
 	hal::init();
 	hal::startPwm();  // negative rail for the analog front end first
 	Tft::begin();

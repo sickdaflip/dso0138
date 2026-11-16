@@ -38,10 +38,15 @@ void startPwm();
 void led(bool on);
 
 /**
- * Hands control to the STM32 system memory bootloader (USART1, 8E1,
- * autobaud), as if BOOT0 were high. Does not return.
+ * Restarts into the STM32 system memory bootloader (USART1, 8E1, autobaud),
+ * as if BOOT0 were high. A flag in backup register DR1 survives the system
+ * reset; bootCheck() then jumps to the bootloader while the chip is still in
+ * its reset state. Does not return.
  */
 [[noreturn]] void enterBootloader();
+
+/** Must be the first call in main(), before any clock or GPIO setup. */
+void bootCheck();
 
 // USART1 -------------------------------------------------------------------
 void serialInit(uint32_t baud);

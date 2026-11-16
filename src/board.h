@@ -10,7 +10,7 @@
 #endif
 
 #define FW_NAME    "DSO138 Open"
-#define FW_VERSION "0.2.1"
+#define FW_VERSION "0.2.2"
 
 // ---------------------------------------------------------------------------
 // TFT (ILI9341, 8-bit parallel 8080 bus)

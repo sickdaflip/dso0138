@@ -103,13 +103,13 @@ Alpine.data('dso', () => ({
 		link = new SerialLink(port);
 		await link.open(115200);
 		await link.writeText('\nboot\n');
-		await sleep(400);
+		await sleep(600);  // firmware resets into the ROM bootloader
 		await link.close();
 		link = new SerialLink(port);
 		await link.open(115200, 'even');
 		boot = new Stm32Boot(link);
 		try {
-			return { link, boot, id: await connect(boot, null, 4) };
+			return { link, boot, id: await connect(boot, null, 6) };
 		} catch {
 			await link.close();
 			throw new Error(this.t('errNoAnswer'));
