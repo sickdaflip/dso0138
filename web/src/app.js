@@ -32,6 +32,8 @@ Alpine.data('dso', () => ({
 	frame: null,
 	stats: null,
 	device: '',
+	frameCount: 0,
+	capturedAt: '',
 
 	init() {
 		this.$watch('lang', (l) => {
@@ -194,6 +196,7 @@ Alpine.data('dso', () => ({
 		await link.open(115200);
 		const parser = new FrameParser(
 			(f) => {
+				this.frameCount++;
 				this.frame = f;
 				this.stats = measure(f);
 				this.redraw();
@@ -223,11 +226,24 @@ Alpine.data('dso', () => ({
 	async setStream(on) {
 		if (!this.link) return;
 		this.streaming = on;
+		if (on) this.capturedAt = '';
 		await this.link.writeText(on ? 's1\n' : 's0\n');
 	},
 
+	/**
+	 * Single capture: stops streaming and fetches one frame, so the view
+	 * freezes on it. Gives feedback when nothing arrives.
+	 */
 	async capture() {
-		if (this.link) await this.link.writeText('w\n');
+		if (!this.link) return;
+		if (this.streaming) await this.setStream(false);
+		const before = this.frameCount;
+		this.capturedAt = '';
+		await this.link.writeText('w\n');
+		for (let i = 0; i < 40 && this.frameCount === before; i++) await sleep(50);
+		this.capturedAt = this.frameCount === before
+			? this.t('noFrame')
+			: this.t('capturedAt', { time: new Date().toLocaleTimeString() });
 	},
 
 	exportCsv() {
