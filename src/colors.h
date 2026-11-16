@@ -14,7 +14,7 @@
 #define C_WHITE          0xFFDF  // #F8FAFC
 #define C_ACCENT         0x231D  // #2563EB
 #define C_ACCENT_LIGHT   0x653F  // #60A5FA
-#define C_TRACE          0xFE62  // #FACC15
+#define C_TRACE          0xFFDF  // #F8FAFC
 #define C_TRACE_DIM      0x71E2  // #713F12
 #define C_TRIG           0xFB82  // #F97316
 #define C_ZERO           0x3DFF  // #38BDF8

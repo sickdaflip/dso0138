@@ -36,7 +36,7 @@ PALETTE = {
     "C_WHITE": "#F8FAFC",       # slate-50
     "C_ACCENT": "#2563EB",      # blue-600
     "C_ACCENT_LIGHT": "#60A5FA",  # blue-400
-    "C_TRACE": "#FACC15",       # yellow-400
+    "C_TRACE": "#F8FAFC",       # slate-50 (white)
     "C_TRACE_DIM": "#713F12",   # yellow-900
     "C_TRIG": "#F97316",        # orange-500
     "C_ZERO": "#38BDF8",        # sky-400

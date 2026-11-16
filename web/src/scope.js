@@ -110,7 +110,7 @@ export function draw(canvas, frame) {
 	ctx.stroke();
 	ctx.setLineDash([]);
 
-	ctx.strokeStyle = '#facc15';
+	ctx.strokeStyle = '#f8fafc';
 	ctx.lineWidth = 1.5;
 	ctx.lineJoin = 'round';
 	ctx.beginPath();
