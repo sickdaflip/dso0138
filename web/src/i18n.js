@@ -59,9 +59,22 @@ const en = {
 	timebase: 'Time/div', vdiv: 'Volts/div',
 	log: 'Log',
 	footer: 'MIT licensed · not affiliated with JYE Tech',
+	remoteTitle: 'Remote control',
+	remoteDesc: 'All settings of the DSO138, live over the serial connection.',
+	remoteConnect: 'Connect the live view to control the DSO138 from here.',
+	acquisition: 'Acquisition', run: 'Run', stop: 'Stop', center: 'Center',
+	inputSwitches: 'Input (slide switches)',
+	trigger: 'Trigger', trigMode: 'Mode', mode0: 'Auto', mode1: 'Normal', mode2: 'Single',
+	edge: 'Edge', rising: 'Rising', falling: 'Falling', level: 'Level',
+	position: 'Position and display', vpos: 'Vertical', hpos: 'Trigger position',
+	showMeas: 'Measurements on the display', traceColor: 'Trace color', deviceLang: 'Device language',
+	generator: 'Signal generator', genMode: 'Mode', genParam: 'Parameter',
+	gen0: 'Test 1 kHz', gen1: 'Square', gen2: 'Sweep', gen3: 'Burst', gen4: 'Glitch', gen5: 'UART',
+	gen6: 'PRBS', gen7: 'Servo', gen8: 'IR remote', gen9: 'Fan PWM',
+	cpl0: 'GND', cpl1: 'AC', cpl2: 'DC',
 };
 
-const enGB = { ...en };
+const enGB = { ...en, center: 'Centre', traceColor: 'Trace colour' };
 
 const de = {
 	subtitle: 'Offene Firmware · Browser-Flasher und Live-Ansicht',
@@ -114,6 +127,19 @@ const de = {
 	timebase: 'Zeit/Div', vdiv: 'Volt/Div',
 	log: 'Protokoll',
 	footer: 'MIT-Lizenz · keine Verbindung zu JYE Tech',
+	remoteTitle: 'Fernbedienung',
+	remoteDesc: 'Alle Einstellungen des DSO138, live über die serielle Verbindung.',
+	remoteConnect: 'Live-Ansicht verbinden, um das DSO138 von hier zu bedienen.',
+	acquisition: 'Erfassung', run: 'Start', stop: 'Stopp', center: 'Zentrieren',
+	inputSwitches: 'Eingang (Schiebeschalter)',
+	trigger: 'Trigger', trigMode: 'Modus', mode0: 'Auto', mode1: 'Normal', mode2: 'Einzel',
+	edge: 'Flanke', rising: 'Steigend', falling: 'Fallend', level: 'Pegel',
+	position: 'Position und Anzeige', vpos: 'Vertikal', hpos: 'Triggerposition',
+	showMeas: 'Messwerte im Display', traceColor: 'Spurfarbe', deviceLang: 'Gerätesprache',
+	generator: 'Signalgenerator', genMode: 'Modus', genParam: 'Parameter',
+	gen0: 'Test 1 kHz', gen1: 'Rechteck', gen2: 'Sweep', gen3: 'Pulspaket', gen4: 'Glitch', gen5: 'UART',
+	gen6: 'PRBS', gen7: 'Servo', gen8: 'IR-Fernbedienung', gen9: 'Lüfter-PWM',
+	cpl0: 'GND', cpl1: 'AC', cpl2: 'DC',
 };
 
 const es = {
@@ -167,6 +193,19 @@ const es = {
 	timebase: 'Tiempo/div', vdiv: 'Voltios/div',
 	log: 'Registro',
 	footer: 'Licencia MIT · sin relación con JYE Tech',
+	remoteTitle: 'Control remoto',
+	remoteDesc: 'Todos los ajustes del DSO138, en vivo por la conexión serie.',
+	remoteConnect: 'Conecte la vista en vivo para manejar el DSO138 desde aquí.',
+	acquisition: 'Adquisición', run: 'Iniciar', stop: 'Parar', center: 'Centrar',
+	inputSwitches: 'Entrada (interruptores)',
+	trigger: 'Disparo', trigMode: 'Modo', mode0: 'Auto', mode1: 'Normal', mode2: 'Único',
+	edge: 'Flanco', rising: 'Subida', falling: 'Bajada', level: 'Nivel',
+	position: 'Posición y pantalla', vpos: 'Vertical', hpos: 'Posición del disparo',
+	showMeas: 'Mediciones en pantalla', traceColor: 'Color de traza', deviceLang: 'Idioma del equipo',
+	generator: 'Generador de señal', genMode: 'Modo', genParam: 'Parámetro',
+	gen0: 'Test 1 kHz', gen1: 'Cuadrada', gen2: 'Barrido', gen3: 'Ráfaga', gen4: 'Glitch', gen5: 'UART',
+	gen6: 'PRBS', gen7: 'Servo', gen8: 'Mando IR', gen9: 'PWM ventilador',
+	cpl0: 'GND', cpl1: 'AC', cpl2: 'DC',
 };
 
 const fr = {
@@ -220,6 +259,19 @@ const fr = {
 	timebase: 'Temps/div', vdiv: 'Volts/div',
 	log: 'Journal',
 	footer: 'Licence MIT · sans lien avec JYE Tech',
+	remoteTitle: 'Commande à distance',
+	remoteDesc: 'Tous les réglages du DSO138, en direct via la liaison série.',
+	remoteConnect: 'Connectez la vue en direct pour piloter le DSO138 d’ici.',
+	acquisition: 'Acquisition', run: 'Marche', stop: 'Arrêt', center: 'Centrer',
+	inputSwitches: 'Entrée (commutateurs)',
+	trigger: 'Déclenchement', trigMode: 'Mode', mode0: 'Auto', mode1: 'Normal', mode2: 'Unique',
+	edge: 'Front', rising: 'Montant', falling: 'Descendant', level: 'Niveau',
+	position: 'Position et affichage', vpos: 'Vertical', hpos: 'Position du déclenchement',
+	showMeas: 'Mesures à l’écran', traceColor: 'Couleur de trace', deviceLang: 'Langue de l’appareil',
+	generator: 'Générateur de signaux', genMode: 'Mode', genParam: 'Paramètre',
+	gen0: 'Test 1 kHz', gen1: 'Carré', gen2: 'Balayage', gen3: 'Salve', gen4: 'Glitch', gen5: 'UART',
+	gen6: 'PRBS', gen7: 'Servo', gen8: 'Télécommande IR', gen9: 'PWM ventilateur',
+	cpl0: 'GND', cpl1: 'AC', cpl2: 'DC',
 };
 
 const tables = { 'en-US': en, 'en-GB': enGB, de, es, fr };

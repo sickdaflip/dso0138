@@ -6,14 +6,25 @@
 
 /** Collects "#frame" header, sample lines and "#end" into frame objects. */
 export class FrameParser {
-	constructor(onFrame, onInfo) {
+	constructor(onFrame, onInfo, onState, onGenDesc) {
 		this.onFrame = onFrame;
 		this.onInfo = onInfo;
+		this.onState = onState;
+		this.onGenDesc = onGenDesc;
 		this.cur = null;
 	}
 
 	line(text) {
-		if (text.startsWith('#frame')) {
+		if (text.startsWith('#state')) {
+			const st = {};
+			for (const kv of text.slice(7).trim().split(/\s+/)) {
+				const [k, v] = kv.split('=');
+				st[k] = Number(v);
+			}
+			this.onState?.(st);
+		} else if (/^#gd[01] /.test(text)) {
+			this.onGenDesc?.(Number(text[3]), text.slice(5));
+		} else if (text.startsWith('#frame')) {
 			const meta = {};
 			for (const kv of text.slice(7).trim().split(/\s+/)) {
 				const [k, v] = kv.split('=');

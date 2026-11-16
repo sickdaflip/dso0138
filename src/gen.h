@@ -35,6 +35,13 @@ void setMode(Mode m);
 /** Number of adjustable parameters of the current mode (0..2). */
 uint8_t paramCount();
 
+/** Number of steps of parameter `which` and its current step. */
+uint16_t paramSteps(uint8_t which);
+uint16_t paramValue(uint8_t which);
+
+/** Sets parameter `which` to step `value` (clamped) and restarts the output. */
+void setParam(uint8_t which, uint16_t value);
+
 /** Steps parameter `which` by `dir` (+1/-1) and restarts the output. */
 void adjust(uint8_t which, int8_t dir);
 

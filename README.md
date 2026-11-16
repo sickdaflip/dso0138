@@ -115,11 +115,14 @@ This file is copyright JYE Tech and not covered by the MIT license of this proje
    0.1V, SEN2 to ×5 (giving 0.5 V/div) and the timebase to 0.2 ms/div. Adjust the
    trimmer C4 for flat tops (probe compensation).
 
-## Live view
+## Live view and remote control
 
 With the jumpers open, connect the same adapter and click **Connect** in the
 live view section of the flasher page. The waveform is streamed every 0.5 s and
-can be exported as CSV.
+can be exported as CSV. The remote control section below then operates every
+setting of the DSO138: run/stop, timebase, trigger mode, edge and level,
+positions, measurements, trace color, device language and the signal
+generator. V/div and coupling are set by the slide switches and are shown.
 
 Serial commands (115200 8N1, line based):
 
@@ -129,7 +132,15 @@ Serial commands (115200 8N1, line based):
 | `w` | `#frame dt=… n=… trig=… zero=… vpc=… vdiv=… tdiv=… cpl=… roll=… col=…`, raw ADC counts (32 per line), `#end` |
 | `m` | `#meas freq=… vpp=… vrms=… vavg=… vmax=… vmin=… duty=…` |
 | `s1` / `s0` | Stream frames on / off |
-| `boot` | `#boot`, then jump to the STM32 serial bootloader (115200 8E1) |
+| `boot` | `#boot`, then restart into the STM32 serial bootloader (115200 8E1) |
+| `state` | `#state tb=… mode=… edge=… level=… vpos=… hpos=… run=… meas=… color=… lang=… range=… cpl=… gen=… gn=… gp0=… gp1=… gs0=… gs1=… vpc=…`, then `#gd0 <text>` / `#gd1 <text>` with the generator parameters |
+| `set <key> <n>` | Sets `tb`, `mode`, `edge`, `level`, `vpos`, `hpos`, `meas`, `color` or `lang` (values as in `#state`), answers `#state` |
+| `run 0` / `run 1` | Stop / run |
+| `center` | Trace and trigger back to the center |
+| `gen <mode>` / `genp <which> <step>` | Generator mode (0–9) / parameter step |
+
+The device also sends `#state` whenever something changes on it (buttons,
+slide switches, a finished single shot), so the web interface stays in sync.
 
 Volts = (count − zero) × vpc. Time of sample *i* = (i − trig) × dt.
 

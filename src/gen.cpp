@@ -252,6 +252,26 @@ uint8_t paramCount() {
 	return (PARAMS[cur][0].count ? 1 : 0) + (PARAMS[cur][1].count ? 1 : 0);
 }
 
+uint16_t paramSteps(uint8_t which) {
+	if (which >= paramCount()) return 0;
+	if (cur == GEN_IR) return 256;
+	return PARAMS[cur][which].count;
+}
+
+uint16_t paramValue(uint8_t which) {
+	if (cur == GEN_IR) return irCommand;
+	return which < 2 ? param[which] : 0;
+}
+
+void setParam(uint8_t which, uint16_t value) {
+	uint16_t n = paramSteps(which);
+	if (!n) return;
+	if (value >= n) value = n - 1;
+	if (cur == GEN_IR) irCommand = uint8_t(value);
+	else param[which] = uint8_t(value);
+	apply();
+}
+
 void adjust(uint8_t which, int8_t dir) {
 	if (cur == GEN_IR && which == 0) {
 		irCommand = uint8_t(irCommand + dir);

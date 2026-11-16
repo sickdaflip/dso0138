@@ -4,10 +4,16 @@ import { SerialLink, sleep } from './serial.js';
 import { Stm32Boot, CHIP_NAMES } from './stm32.js';
 import { connect, erase, program, verify, backup } from './flash.js';
 import { loadImage, parseHex, FLASH_BASE } from './hex.js';
-import { FrameParser, draw, measure, si, toCsv } from './scope.js';
+import { FrameParser, draw, measure, si, toCsv, TRACE_COLORS } from './scope.js';
 import { languages, detectLanguage, translate } from './i18n.js';
 
 const ORIGINAL = 'firmware/original/113-13801-061.hex';
+
+// Same tables as the firmware (model.cpp, i18n.cpp)
+const TIMEBASES = [10e-6, 20e-6, 50e-6, 100e-6, 200e-6, 500e-6, 1e-3, 2e-3, 5e-3, 10e-3, 20e-3,
+	50e-3, 100e-3, 200e-3, 500e-3, 1, 2, 5, 10];
+const RANGES = [5, 2, 1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01];
+const DEVICE_LANGS = ['English (US)', 'English (UK)', 'Deutsch', 'Español', 'Français'];
 
 Alpine.data('dso', () => ({
 	languages,
@@ -32,6 +38,12 @@ Alpine.data('dso', () => ({
 	frame: null,
 	stats: null,
 	device: '',
+	dev: null,          // device settings from "#state"
+	genDesc: ['', ''],
+	TIMEBASES,
+	RANGES,
+	DEVICE_LANGS,
+	TRACE_COLORS,
 	frameCount: 0,
 	capturedAt: '',
 
@@ -205,10 +217,14 @@ Alpine.data('dso', () => ({
 				if (info.startsWith('DSO138')) this.device = info;
 				this.addLog(info);
 			},
+			(st) => { this.dev = st; },
+			(i, text) => { this.genDesc[i] = text; },
 		);
 		link.onLine = (l) => parser.line(l);
 		this.link = link;
 		await link.writeText('i\n');
+		await sleep(100);
+		await link.writeText('state\n');
 		await sleep(100);
 		await this.setStream(true);
 	},
@@ -221,6 +237,46 @@ Alpine.data('dso', () => ({
 		await this.link.close();
 		this.link = null;
 		this.streaming = false;
+		this.dev = null;
+	},
+
+	// Remote control ----------------------------------------------------------
+	async send(command) {
+		if (!this.link) return;
+		await this.link.writeText(command + '\n');
+	},
+
+	set(key, value) {
+		if (this.dev) this.dev[key] = Number(value);
+		this.send(`set ${key} ${Math.round(Number(value))}`);
+	},
+
+	toggleRun() {
+		if (this.dev) this.send(`run ${this.dev.run ? 0 : 1}`);
+	},
+
+	setGen(mode) {
+		this.genDesc = ['', ''];
+		this.send(`gen ${mode}`);
+	},
+
+	genStep(which, dir) {
+		if (!this.dev) return;
+		const steps = this.dev['gs' + which];
+		const v = Math.min(steps - 1, Math.max(0, this.dev['gp' + which] + dir));
+		this.send(`genp ${which} ${v}`);
+	},
+
+	levelText() {
+		return this.dev ? si(this.dev.level * this.dev.vpc, 'V') : '';
+	},
+
+	vposText() {
+		return this.dev ? si(this.dev.vpos * RANGES[this.dev.range] / 25, 'V') : '';
+	},
+
+	hposText() {
+		return this.dev ? si(this.dev.hpos * TIMEBASES[this.dev.tb] / 25, 's') : '';
 	},
 
 	async setStream(on) {

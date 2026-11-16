@@ -55,7 +55,7 @@ int8_t zeroStableRange = -1;
 
 bool streaming = false;
 uint32_t lastStream = 0;
-char cmd[16];
+char cmd[40];
 uint8_t cmdLen = 0;
 
 View view() {
@@ -206,6 +206,9 @@ void sendMeasurements() {
 	hal::serialWrite("\r\n");
 }
 
+bool remoteCommand(const char *c);
+void sendState();
+
 void handleCommand(const char *c) {
 	if (!strcmp(c, "i") || !strcmp(c, "?")) {
 		hal::serialWrite(FW_NAME " " FW_VERSION "\r\n");
@@ -226,7 +229,7 @@ void handleCommand(const char *c) {
 	} else if (!strcmp(c, "s0")) {
 		streaming = false;
 		hal::serialWrite("#ok\r\n");
-	} else if (c[0]) {
+	} else if (c[0] && !remoteCommand(c)) {
 		hal::serialWrite("#error unknown command\r\n");
 	}
 }
@@ -509,6 +512,181 @@ void handleKey(Key k) {
 	}
 }
 
+
+// ---------------------------------------------------------------------------
+// Remote control (web interface)
+//   state                -> "#state key=value ..." and "#gd0/#gd1 <text>"
+//   set <key> <value>    -> tb, mode, edge, level, vpos, hpos, meas, color,
+//                           lang (numbers as in #state), then "#state"
+//   run 0|1, center
+//   gen <mode>, genp <which> <step>
+// The device also sends "#state" whenever something changes on it.
+// ---------------------------------------------------------------------------
+void putKV(const char *k, int32_t v) {
+	hal::serialPutc(' ');
+	hal::serialWrite(k);
+	hal::serialPutc('=');
+	putInt(v);
+}
+
+void sendState() {
+	hal::serialWrite("#state");
+	putKV("tb", cfg.timebase);
+	putKV("mode", cfg.trigMode);
+	putKV("edge", cfg.trigEdge);
+	putKV("level", cfg.trigLevel);
+	putKV("vpos", cfg.vpos);
+	putKV("hpos", cfg.hpos);
+	putKV("run", running);
+	putKV("meas", cfg.showMeasurements);
+	putKV("color", cfg.traceColor);
+	putKV("lang", cfg.language);
+	putKV("range", range);
+	putKV("cpl", coupling);
+	putKV("gen", Gen::mode());
+	putKV("gn", Gen::paramCount());
+	putKV("gp0", Gen::paramValue(0));
+	putKV("gp1", Gen::paramValue(1));
+	putKV("gs0", Gen::paramSteps(0));
+	putKV("gs1", Gen::paramSteps(1));
+	hal::serialWrite(" vpc=");
+	putFloat(voltsPerCount(range));
+	hal::serialWrite("\r\n");
+	char d[24];
+	for (uint8_t i = 0; i < Gen::paramCount(); i++) {
+		Gen::describe(i, d, sizeof d);
+		hal::serialWrite(i ? "#gd1 " : "#gd0 ");
+		hal::serialWrite(d);
+		hal::serialWrite("\r\n");
+	}
+}
+
+/** Redraws whatever the current screen shows after a remote change. */
+void refreshScreen(bool restart) {
+	if (screen == SCR_SCOPE || screen == SCR_GEN) {
+		View v = view();
+		Ui::status(v);
+		redrawFrame();
+		if (screen == SCR_GEN) drawGen();
+		if (restart && running) startCapture();
+	} else if (screen == SCR_MENU) {
+		drawMenu();
+	}
+}
+
+int32_t parseInt(const char *&p) {
+	while (*p == ' ') p++;
+	bool neg = *p == '-';
+	if (neg || *p == '+') p++;
+	int32_t v = 0;
+	while (*p >= '0' && *p <= '9') v = v * 10 + (*p++ - '0');
+	return neg ? -v : v;
+}
+
+bool startsWith(const char *s, const char *prefix, const char *&rest) {
+	size_t n = strlen(prefix);
+	if (strncmp(s, prefix, n) != 0) return false;
+	rest = s + n;
+	return true;
+}
+
+bool remoteCommand(const char *c) {
+	const char *p;
+	if (!strcmp(c, "state")) {
+		sendState();
+		return true;
+	}
+	if (startsWith(c, "run ", p)) {
+		bool on = parseInt(p) != 0;
+		if (on != running) {
+			running = on;
+			if (running && (screen == SCR_SCOPE || screen == SCR_GEN)) startCapture();
+			else Acq::stop();
+			Ui::status(view());
+		}
+		sendState();
+		return true;
+	}
+	if (!strcmp(c, "center")) {
+		cfg.vpos = cfg.hpos = cfg.trigLevel = 0;
+		markDirty();
+		if (screen == SCR_SCOPE || screen == SCR_GEN) {
+			Ui::layout();
+			drawScope();
+			if (screen == SCR_GEN) drawGen();
+			if (running) startCapture();
+		}
+		sendState();
+		return true;
+	}
+	if (startsWith(c, "gen ", p)) {
+		int32_t m = parseInt(p);
+		if (m >= 0 && m < Gen::GEN_MODE_COUNT) Gen::setMode(Gen::Mode(m));
+		genFocus = 0;
+		refreshScreen(false);
+		sendState();
+		return true;
+	}
+	if (startsWith(c, "genp ", p)) {
+		int32_t which = parseInt(p);
+		int32_t value = parseInt(p);
+		if (which >= 0 && which < 2 && value >= 0) Gen::setParam(uint8_t(which), uint16_t(value));
+		refreshScreen(false);
+		sendState();
+		return true;
+	}
+	if (!startsWith(c, "set ", p)) return false;
+
+	char key[8];
+	uint8_t n = 0;
+	while (*p && *p != ' ' && n < sizeof key - 1) key[n++] = *p++;
+	key[n] = 0;
+	int32_t v = parseInt(p);
+	bool restart = false;
+
+	if (!strcmp(key, "tb")) {
+		cfg.timebase = uint8_t(clampT<int32_t>(v, 0, TIMEBASE_COUNT - 1));
+		restart = true;
+	} else if (!strcmp(key, "mode")) {
+		cfg.trigMode = uint8_t(clampT<int32_t>(v, 0, TRIG_MODE_COUNT - 1));
+		restart = true;
+	} else if (!strcmp(key, "edge")) {
+		cfg.trigEdge = v ? EDGE_FALLING : EDGE_RISING;
+		restart = true;
+	} else if (!strcmp(key, "level")) {
+		cfg.trigLevel = int16_t(clampT<int32_t>(v, -LEVEL_LIMIT, LEVEL_LIMIT));
+		restart = true;
+	} else if (!strcmp(key, "vpos")) {
+		cfg.vpos = int16_t(clampT<int32_t>(v, -VPOS_LIMIT, VPOS_LIMIT));
+	} else if (!strcmp(key, "hpos")) {
+		cfg.hpos = int16_t(clampT<int32_t>(v, -HPOS_LIMIT, HPOS_LIMIT));
+	} else if (!strcmp(key, "meas")) {
+		cfg.showMeasurements = v != 0;
+		if (screen == SCR_SCOPE) Ui::measurements(view());
+	} else if (!strcmp(key, "color")) {
+		cfg.traceColor = uint8_t(clampT<int32_t>(v, 0, TRACE_COLOR_COUNT - 1));
+		if (screen == SCR_SCOPE || screen == SCR_GEN) {
+			Ui::layout();
+			drawScope();
+			if (screen == SCR_GEN) drawGen();
+		}
+	} else if (!strcmp(key, "lang")) {
+		cfg.language = uint8_t(clampT<int32_t>(v, 0, LANG_COUNT - 1));
+		I18n::set(cfg.language);
+		if (screen == SCR_SCOPE || screen == SCR_GEN) {
+			Ui::layout();
+			drawScope();
+			if (screen == SCR_GEN) drawGen();
+		}
+	} else {
+		return false;
+	}
+	markDirty();
+	refreshScreen(restart);
+	sendState();
+	return true;
+}
+
 void pollSwitches(uint32_t now) {
 	if (now - lastSwitch < SWITCH_POLL_MS) return;
 	lastSwitch = now;
@@ -516,6 +694,7 @@ void pollSwitches(uint32_t now) {
 	if (sw.range == range && sw.coupling == coupling) return;
 	range = sw.range;
 	coupling = sw.coupling;
+	sendState();
 	if (screen == SCR_SCOPE || screen == SCR_GEN) {
 		Ui::status(view());
 		redrawFrame();
@@ -550,6 +729,7 @@ void onFrame(uint32_t now) {
 	}
 	if (cfg.trigMode == TRIG_SINGLE && f.triggered) {
 		running = false;
+		sendState();
 	} else {
 		startCapture();
 	}
@@ -599,7 +779,10 @@ int main() {
 	for (;;) {
 		uint32_t now = hal::millis();
 		Key k = Buttons::poll(now);
-		if (k != KEY_NONE) handleKey(k);
+		if (k != KEY_NONE) {
+			handleKey(k);
+			sendState();  // keeps a connected web interface in sync
+		}
 		pollSwitches(now);
 		pollSerial();
 

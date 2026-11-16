@@ -197,6 +197,142 @@
 				</details>
 			</div>
 		</section>
+
+		<!-- Remote control -->
+		<section class="rounded-xl border border-gray-200 bg-white shadow-2xs lg:col-span-5 dark:border-neutral-700 dark:bg-neutral-800">
+			<div class="border-b border-gray-200 px-5 py-4 dark:border-neutral-700">
+				<h2 class="font-semibold text-gray-900 dark:text-white" x-text="t('remoteTitle')"></h2>
+				<p class="mt-1 text-sm text-gray-500 dark:text-neutral-400" x-text="dev ? t('remoteDesc') : t('remoteConnect')"></p>
+			</div>
+			<div class="grid gap-6 p-5 sm:grid-cols-2 xl:grid-cols-4" :class="!dev && 'pointer-events-none opacity-50'">
+
+				<!-- Acquisition -->
+				<div class="space-y-4">
+					<h3 class="text-sm font-medium text-gray-800 dark:text-neutral-200" x-text="t('acquisition')"></h3>
+					<button type="button" @click="toggleRun()"
+						class="inline-flex w-full items-center justify-center gap-x-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white"
+						:class="dev?.run ? 'bg-red-600 hover:bg-red-700' : 'bg-teal-600 hover:bg-teal-700'">
+						<span class="size-2 rounded-full bg-white/80"></span>
+						<span x-text="dev?.run ? t('stop') : t('run')"></span>
+					</button>
+					<label class="block">
+						<span class="mb-1 block text-xs text-gray-500 dark:text-neutral-400" x-text="t('timebase')"></span>
+						<select @change="set('tb', $event.target.value)" class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900">
+							<template x-for="(tb, i) in TIMEBASES" :key="i">
+								<option :value="i" :selected="dev?.tb === i" x-text="si(tb, 's', 2)"></option>
+							</template>
+						</select>
+					</label>
+					<div>
+						<span class="mb-1 block text-xs text-gray-500 dark:text-neutral-400" x-text="t('inputSwitches')"></span>
+						<div class="rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium tabular-nums dark:bg-neutral-700/50"
+							x-text="dev ? `${si(RANGES[dev.range], 'V', 2)}/div · ${t('cpl' + dev.cpl)}` : '–'"></div>
+					</div>
+				</div>
+
+				<!-- Trigger -->
+				<div class="space-y-4">
+					<h3 class="text-sm font-medium text-gray-800 dark:text-neutral-200" x-text="t('trigger')"></h3>
+					<div>
+						<span class="mb-1 block text-xs text-gray-500 dark:text-neutral-400" x-text="t('trigMode')"></span>
+						<div class="flex rounded-lg bg-gray-100 p-1 dark:bg-neutral-700/50">
+							<template x-for="m in [0, 1, 2]" :key="m">
+								<button type="button" @click="set('mode', m)" class="flex-1 rounded-md px-2 py-1.5 text-sm font-medium"
+									:class="dev?.mode === m ? 'bg-white text-gray-900 shadow-2xs dark:bg-neutral-900 dark:text-white' : 'text-gray-600 dark:text-neutral-400'"
+									x-text="t('mode' + m)"></button>
+							</template>
+						</div>
+					</div>
+					<div>
+						<span class="mb-1 block text-xs text-gray-500 dark:text-neutral-400" x-text="t('edge')"></span>
+						<div class="flex rounded-lg bg-gray-100 p-1 dark:bg-neutral-700/50">
+							<template x-for="e in [0, 1]" :key="e">
+								<button type="button" @click="set('edge', e)" class="flex-1 rounded-md px-2 py-1.5 text-sm font-medium"
+									:class="dev?.edge === e ? 'bg-white text-gray-900 shadow-2xs dark:bg-neutral-900 dark:text-white' : 'text-gray-600 dark:text-neutral-400'"
+									x-text="(e ? '↓ ' : '↑ ') + t(e ? 'falling' : 'rising')"></button>
+							</template>
+						</div>
+					</div>
+					<label class="block">
+						<span class="mb-1 flex justify-between text-xs text-gray-500 dark:text-neutral-400">
+							<span x-text="t('level')"></span><span class="tabular-nums" x-text="levelText()"></span>
+						</span>
+						<input type="range" min="-400" max="400" step="4" :value="dev?.level ?? 0"
+							@input="dev && (dev.level = Number($event.target.value))" @change="set('level', $event.target.value)"
+							class="w-full accent-orange-500">
+					</label>
+				</div>
+
+				<!-- Position and display -->
+				<div class="space-y-4">
+					<h3 class="text-sm font-medium text-gray-800 dark:text-neutral-200" x-text="t('position')"></h3>
+					<label class="block">
+						<span class="mb-1 flex justify-between text-xs text-gray-500 dark:text-neutral-400">
+							<span x-text="t('vpos')"></span><span class="tabular-nums" x-text="vposText()"></span>
+						</span>
+						<input type="range" min="-120" max="120" step="1" :value="dev?.vpos ?? 0"
+							@input="dev && (dev.vpos = Number($event.target.value))" @change="set('vpos', $event.target.value)"
+							class="w-full accent-sky-500">
+					</label>
+					<label class="block">
+						<span class="mb-1 flex justify-between text-xs text-gray-500 dark:text-neutral-400">
+							<span x-text="t('hpos')"></span><span class="tabular-nums" x-text="hposText()"></span>
+						</span>
+						<input type="range" min="-350" max="350" step="1" :value="dev?.hpos ?? 0"
+							@input="dev && (dev.hpos = Number($event.target.value))" @change="set('hpos', $event.target.value)"
+							class="w-full accent-orange-500">
+					</label>
+					<button type="button" @click="send('center')"
+						class="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+						x-text="t('center')"></button>
+					<label class="flex items-center gap-x-3 text-sm">
+						<input type="checkbox" :checked="dev?.meas" @change="set('meas', $event.target.checked ? 1 : 0)" class="size-4 rounded accent-blue-600">
+						<span x-text="t('showMeas')"></span>
+					</label>
+					<div>
+						<span class="mb-1 block text-xs text-gray-500 dark:text-neutral-400" x-text="t('traceColor')"></span>
+						<div class="flex gap-2">
+							<template x-for="(c, i) in TRACE_COLORS" :key="i">
+								<button type="button" @click="set('color', i)" class="size-7 rounded-full border-2"
+									:class="dev?.color === i ? 'border-blue-600 ring-2 ring-blue-600/30' : 'border-gray-300 dark:border-neutral-600'"
+									:style="`background: ${c}`" :aria-label="c"></button>
+							</template>
+						</div>
+					</div>
+					<label class="block">
+						<span class="mb-1 block text-xs text-gray-500 dark:text-neutral-400" x-text="t('deviceLang')"></span>
+						<select @change="set('lang', $event.target.value)" class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900">
+							<template x-for="(name, i) in DEVICE_LANGS" :key="i">
+								<option :value="i" :selected="dev?.lang === i" x-text="name"></option>
+							</template>
+						</select>
+					</label>
+				</div>
+
+				<!-- Signal generator -->
+				<div class="space-y-4">
+					<h3 class="text-sm font-medium text-gray-800 dark:text-neutral-200" x-text="t('generator')"></h3>
+					<label class="block">
+						<span class="mb-1 block text-xs text-gray-500 dark:text-neutral-400" x-text="t('genMode')"></span>
+						<select @change="setGen($event.target.value)" class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900">
+							<template x-for="m in [0,1,2,3,4,5,6,7,8,9]" :key="m">
+								<option :value="m" :selected="dev?.gen === m" x-text="t('gen' + m)"></option>
+							</template>
+						</select>
+					</label>
+					<template x-for="w in [0, 1]" :key="w">
+						<div x-show="dev && dev.gn > w">
+							<span class="mb-1 block text-xs text-gray-500 dark:text-neutral-400" x-text="t('genParam') + ' ' + (w + 1)"></span>
+							<div class="flex items-center gap-2">
+								<button type="button" @click="genStep(w, -1)" class="inline-flex size-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-lg font-medium hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900">–</button>
+								<div class="flex-1 rounded-lg bg-gray-100 px-3 py-2 text-center text-sm font-medium tabular-nums dark:bg-neutral-700/50" x-text="genDesc[w] || '–'"></div>
+								<button type="button" @click="genStep(w, 1)" class="inline-flex size-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-lg font-medium hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-900">+</button>
+							</div>
+						</div>
+					</template>
+				</div>
+			</div>
+		</section>
 	</div>
 
 	<footer class="mt-10 text-center text-xs text-gray-500 dark:text-neutral-500">
