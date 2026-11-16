@@ -17,6 +17,7 @@ Alpine.data('dso', () => ({
 	source: 'release',
 	file: null,
 	verifyAfter: true,
+	keepSettings: true,
 	busy: false,
 	progress: 0,
 	status: '',
@@ -82,22 +83,48 @@ Alpine.data('dso', () => ({
 		return loadImage(this.file.name, await this.file.arrayBuffer());
 	},
 
+	/**
+	 * Opens the bootloader. First tries a chip that is already in boot mode
+	 * (JP1/JP2 closed), then asks a running DSO138 Open firmware to jump into
+	 * the bootloader by itself, so no jumpers are needed.
+	 */
+	async openBootloader(port) {
+		let link = new SerialLink(port);
+		await link.open(115200, 'even');
+		let boot = new Stm32Boot(link);
+		try {
+			return { link, boot, id: await connect(boot, null, 2) };
+		} catch {
+			await link.close();
+		}
+		this.addLog('No bootloader answer, asking the firmware to start it');
+		link = new SerialLink(port);
+		await link.open(115200);
+		await link.writeText('\nboot\n');
+		await sleep(400);
+		await link.close();
+		link = new SerialLink(port);
+		await link.open(115200, 'even');
+		boot = new Stm32Boot(link);
+		try {
+			return { link, boot, id: await connect(boot, null, 4) };
+		} catch {
+			await link.close();
+			throw new Error(this.t('errNoAnswer'));
+		}
+	},
+
 	async bootSession(work) {
 		await this.disconnect();
 		const port = await navigator.serial.requestPort();
-		const link = new SerialLink(port);
-		await link.open(115200, 'even');
 		this.busy = true;
 		this.progress = 0;
+		let link = null;
 		try {
-			const boot = new Stm32Boot(link);
 			this.setStatus('phase_connect');
-			let id;
-			try {
-				id = await connect(boot);
-			} catch (e) {
-				throw new Error(this.t('errNoAnswer'));
-			}
+			const s = await this.openBootloader(port);
+			link = s.link;
+			const { boot, id } = s;
 			this.chipInfo = this.t('chip', {
 				name: CHIP_NAMES[id] || 'STM32',
 				id: id.toString(16),
@@ -111,7 +138,7 @@ Alpine.data('dso', () => ({
 			this.addLog(`Error: ${e.message}`);
 		} finally {
 			this.busy = false;
-			await link.close();
+			if (link) await link.close();
 		}
 	},
 
@@ -127,7 +154,10 @@ Alpine.data('dso', () => ({
 		this.addLog(`Image: ${img.data.length} bytes at 0x${img.base.toString(16)}`);
 		await this.bootSession(async (boot) => {
 			this.setStatus('phase_erase');
-			await erase(boot, (ev) => ev === 'unprotect' && this.setStatus('phase_unprotect', 'warn'));
+			// Updates of DSO138 Open keep calibration and settings; other
+			// images get a full erase so no stale data is left behind.
+			const keep = this.source === 'release' && this.keepSettings;
+			await erase(boot, (ev) => ev === 'unprotect' && this.setStatus('phase_unprotect', 'warn'), img, keep);
 			this.setStatus('phase_write');
 			await program(boot, img, (p) => { this.progress = this.verifyAfter ? p * 0.7 : p; });
 			if (this.verifyAfter) {

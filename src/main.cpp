@@ -113,6 +113,7 @@ void drawScope() {
 //   w  -> one frame: "#frame ..." header, comma separated counts, "#end"
 //   m  -> measurements
 //   s1 / s0 -> stream frames on / off
+//   boot -> "#boot", then jump to the STM32 serial bootloader
 // ---------------------------------------------------------------------------
 void putFloat(float v) {
 	char buf[24];
@@ -208,6 +209,12 @@ void handleCommand(const char *c) {
 		else hal::serialWrite("#none\r\n");
 	} else if (!strcmp(c, "m")) {
 		sendMeasurements();
+	} else if (!strcmp(c, "boot")) {
+		Acq::stop();
+		Tft::fillScreen(0);
+		Ui::hint("Bootloader");
+		hal::serialWrite("#boot\r\n");
+		hal::enterBootloader();
 	} else if (!strcmp(c, "s1")) {
 		streaming = true;
 		hal::serialWrite("#ok\r\n");

@@ -37,6 +37,12 @@ void startPwm();
 
 void led(bool on);
 
+/**
+ * Hands control to the STM32 system memory bootloader (USART1, 8E1,
+ * autobaud), as if BOOT0 were high. Does not return.
+ */
+[[noreturn]] void enterBootloader();
+
 // USART1 -------------------------------------------------------------------
 void serialInit(uint32_t baud);
 void serialWrite(const char *s);

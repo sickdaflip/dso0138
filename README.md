@@ -53,11 +53,18 @@ Flashing goes through the STM32 serial bootloader on header **J5** with a
 
 1. Connect the adapter to J5: GND to GND, adapter TX to RXD, adapter RX to TXD.
    Leave the adapter's 5 V unconnected and power the DSO138 as usual.
-2. Close the jumpers **JP1** and **JP2** (boot mode) and power on.
+2. **First flash only** (or when coming from the stock firmware): close the
+   jumpers **JP1** and **JP2** (boot mode) and power on.
 3. Open the browser flasher (Chrome, Edge or Opera on a desktop):
    <https://sickdaflip.github.io/dso0138/>, choose the firmware and click
    **Flash**.
-4. Open JP1/JP2 again and power cycle.
+4. If you closed JP1/JP2, open them again before the next power up.
+
+From 0.2.0 on, the flasher asks a running DSO138 Open to jump into the STM32
+bootloader by itself (serial command `boot`), so updates need neither jumpers
+nor a power cycle. Updates only erase the pages the firmware occupies, so
+calibration and settings in the last flash page survive (option *Keep
+calibration and settings*).
 
 The flasher removes the read protection of the stock firmware automatically
 (this mass erases the chip). It can also restore the original JYE firmware and
@@ -94,6 +101,7 @@ Serial commands (115200 8N1, line based):
 | `w` | `#frame dt=… n=… trig=… zero=… vpc=… vdiv=… tdiv=… cpl=… roll=… col=…`, raw ADC counts (32 per line), `#end` |
 | `m` | `#meas freq=… vpp=… vrms=… vavg=… vmax=… vmin=… duty=…` |
 | `s1` / `s0` | Stream frames on / off |
+| `boot` | `#boot`, then jump to the STM32 serial bootloader (115200 8E1) |
 
 Volts = (count − zero) × vpc. Time of sample *i* = (i − trig) × dt.
 
@@ -126,9 +134,9 @@ select the range. Settings live in flash page 63 (0x0800FC00).
 
 ## Status
 
-0.1.0 is the first version. It builds and the UI is verified in the host
-simulator; hardware testing on the real board is still pending. The
-interleaved 10/20 µs/div mode is the most likely part to need tuning.
+Tested on a 109-13800-00C board: display, timer modes, trigger, measurements,
+zero calibration, flasher and live view work. The interleaved 10/20 µs/div
+mode and roll mode still need more real-world testing.
 
 ## License
 

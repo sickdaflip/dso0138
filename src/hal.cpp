@@ -127,6 +127,40 @@ void led(bool on) {
 	else pinLow(LED_PORT, LED_PIN);
 }
 
+void enterBootloader() {
+	// Let the last reply leave the UART
+	while (!(USART1->SR & USART_SR_TC)) {}
+	__disable_irq();
+	SysTick->CTRL = 0;
+	for (uint8_t i = 0; i < 8; i++) {
+		NVIC->ICER[i] = 0xFFFFFFFF;
+		NVIC->ICPR[i] = 0xFFFFFFFF;
+	}
+	// Peripherals back to reset state
+	RCC->APB1RSTR = 0xFFFFFFFF;
+	RCC->APB1RSTR = 0;
+	RCC->APB2RSTR = 0xFFFFFFFF;
+	RCC->APB2RSTR = 0;
+	DMA1_Channel1->CCR = 0;
+	// Clock tree back to HSI, PLL and HSE off
+	RCC->CR |= RCC_CR_HSION;
+	while (!(RCC->CR & RCC_CR_HSIRDY)) {}
+	RCC->CFGR = 0;
+	while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI) {}
+	RCC->CR &= ~(RCC_CR_PLLON | RCC_CR_HSEON);
+	RCC->CIR = 0x009F0000;  // clear clock interrupt flags
+	FLASH->ACR = FLASH_ACR_PRFTBE;
+
+	constexpr uint32_t SYSMEM = 0x1FFFF000;
+	const uint32_t sp = *reinterpret_cast<const volatile uint32_t *>(SYSMEM);
+	const uint32_t pc = *reinterpret_cast<const volatile uint32_t *>(SYSMEM + 4);
+	SCB->VTOR = SYSMEM;
+	__set_MSP(sp);
+	__enable_irq();
+	reinterpret_cast<void (*)()>(pc)();
+	for (;;) {}
+}
+
 void serialInit(uint32_t baud) {
 	pinMode(GPIOA, 9, PIN_AF_OUTPUT);
 	pinMode(GPIOA, 10, PIN_INPUT_FLOAT);

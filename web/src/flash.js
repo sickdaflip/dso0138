@@ -6,19 +6,35 @@ import { sleep } from './serial.js';
 import { FLASH_BASE } from './hex.js';
 
 const BLOCK = 256;
+const PAGE = 1024;
+
+/** The firmware keeps its settings in the last page of the 64 KiB flash. */
+export const SETTINGS_PAGE = 63;
 
 /** Connects to the bootloader; removes read protection if `unprotect`. */
-export async function connect(boot, log) {
-	await boot.sync();
+export async function connect(boot, log, attempts) {
+	await boot.sync(attempts);
 	const info = await boot.get();
 	const id = await boot.getId();
 	log?.('info', { version: `${info.version >> 4}.${info.version & 15}`, id });
 	return id;
 }
 
-export async function erase(boot, log) {
+/**
+ * Erases the flash. With `image` and `keepSettings` only the pages the image
+ * covers are erased, so calibration and settings survive an update.
+ */
+export async function erase(boot, log, image, keepSettings = false) {
 	try {
-		await boot.eraseAll();
+		if (keepSettings && image) {
+			const first = Math.floor((image.base - FLASH_BASE) / PAGE);
+			const last = Math.floor((image.base - FLASH_BASE + image.data.length - 1) / PAGE);
+			const pages = [];
+			for (let p = first; p <= last; p++) if (p !== SETTINGS_PAGE) pages.push(p);
+			await boot.erasePages(pages);
+		} else {
+			await boot.eraseAll();
+		}
 	} catch (e) {
 		if (!e.nack) throw e;
 		// Write protected or read protected (stock JYE firmware): unprotect.

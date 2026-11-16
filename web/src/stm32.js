@@ -31,8 +31,8 @@ export class Stm32Boot {
 		throw new Error(`Unexpected reply 0x${b.toString(16)} (${what})`);
 	}
 
-	async sync() {
-		for (let i = 0; i < 4; i++) {
+	async sync(attempts = 4) {
+		for (let i = 0; i < attempts; i++) {
 			this.link.drain();
 			await this.link.write([0x7f]);
 			try {
@@ -103,6 +103,22 @@ export class Stm32Boot {
 			await this.link.write([0xff, 0x00]);
 		}
 		await this.ack('mass erase', 40000);
+	}
+
+	/** Erases the listed 1 KiB pages (keeps everything else). */
+	async erasePages(pages) {
+		if (this.commands.includes(0x44)) {
+			await this.command(0x44, 'extended erase');
+			const n = pages.length - 1;
+			const bytes = [n >> 8, n & 0xff];
+			for (const p of pages) bytes.push(p >> 8, p & 0xff);
+			await this.link.write([...bytes, bytes.reduce((a, b) => a ^ b, 0)]);
+		} else {
+			await this.command(0x43, 'erase');
+			const bytes = [pages.length - 1, ...pages];
+			await this.link.write([...bytes, bytes.reduce((a, b) => a ^ b, 0)]);
+		}
+		await this.ack('page erase', 40000);
 	}
 
 	/** Removes read protection; the chip mass erases itself and resets. */

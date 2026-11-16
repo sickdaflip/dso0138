@@ -87,9 +87,17 @@ class FakeChip {
 			this.reply(0x79); this.state = null; return true;
 		}
 		if (s.cmd === 0x43) {
-			const p = this.take(2); if (!p) return false;
-			assert.deepEqual(p, [0xff, 0x00]);
-			this.flash.fill(0xff); this.reply(0x79); this.state = null; return true;
+			if (this.inBuf.length < 1) return false;
+			if (this.inBuf[0] === 0xff) {
+				const p = this.take(2); if (!p) return false;
+				assert.deepEqual(p, [0xff, 0x00]);
+				this.flash.fill(0xff); this.reply(0x79); this.state = null; return true;
+			}
+			const n = this.inBuf[0] + 1;
+			const p = this.take(n + 2); if (!p) return false;
+			assert.equal(p.slice(0, n + 1).reduce((a, b) => a ^ b, 0), p[n + 1], 'erase checksum');
+			for (const page of p.slice(1, n + 1)) this.flash.fill(0xff, page * 1024, page * 1024 + 1024);
+			this.reply(0x79); this.state = null; return true;
 		}
 		if (s.cmd === 0x21) {
 			const a = this.addr(); if (a === null) return false;
@@ -120,7 +128,10 @@ for (const protectedChip of [false, true]) {
 	const id = await connect(boot);
 	assert.equal(id, 0x410);
 	const events = [];
-	await erase(boot, (e) => events.push(e));
+	chip.flash.fill(0x5a, 63 * 1024);  // stored settings
+	await erase(boot, (e) => events.push(e), image, true);
+	// a blank chip keeps the settings page, a protected one is mass erased
+	assert.equal(chip.flash[63 * 1024], protectedChip ? 0xff : 0x5a, 'settings page');
 	assert.equal(events.includes('unprotect'), protectedChip);
 	await program(boot, image);
 	await verify(boot, image);
