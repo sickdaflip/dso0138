@@ -7,7 +7,7 @@
  *    scans new samples for the trigger condition and stops the capture once
  *    the post-trigger part is complete.
  *  - Fast mode (10 and 20 us/div): ADC1 and ADC2 in fast interleaved dual
- *    mode, about 1.71 MS/s. One burst is captured and searched for the trigger.
+ *    mode, about 1.71 MS/s (ADC2 samples first). One burst is captured and searched for the trigger.
  *  - Roll mode (Auto, 100 ms/div and slower): continuous, untriggered.
  *
  * The slide switches are read on ADC2 between captures.

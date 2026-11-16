@@ -279,6 +279,10 @@ bool poll(uint32_t now) {
 			if (!(DMA1->ISR & DMA_ISR_TCIF1)) return false;
 			DMA1->IFCR = DMA_IFCR_CGIF1;
 			haltHw();
+			// In fast interleaved mode ADC2 converts first and ADC1 seven ADC
+			// clocks later, but ADC1 sits in the low half of each 32-bit word.
+			// Swap the halves so the samples are in time order.
+			for (uint16_t i = 0; i < RING / 2; i++) ring.w[i] = (ring.w[i] >> 16) | (ring.w[i] << 16);
 			armed = false;
 			int32_t found = -1;
 			for (uint16_t i = 1; i <= RING - POST; i++) {
