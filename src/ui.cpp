@@ -315,34 +315,47 @@ void measurements(const View &v) {
 		return;
 	}
 	const Measurements &m = *v.m;
-	char buf[20];
-	if (m.freq > 0) Measure::format(buf, sizeof buf, m.freq, "Hz");
-	else strcpy(buf, "--");
-	measureCell(4, 88, I18n::tr(S_FREQ), buf);
 
-	Measure::format(buf, sizeof buf, m.vpp, "V");
-	measureCell(96, 76, I18n::tr(S_VPP), buf);
-
-	Measure::format(buf, sizeof buf, m.vrms, "V");
-	measureCell(176, 76, I18n::tr(S_VRMS), buf);
-
-	if (m.clipped) {
-		Gfx::textBox(FONT_S, I18n::tr(S_CLIPPED), 256, BAR_Y + 5, 62, ALIGN_LEFT, C_ERR_FG, C_BG);
-		return;
+	// Cell widths follow the label lengths of the current language: each cell
+	// reserves its label plus the widest value it can show, the rest of the
+	// bar is shared out as spacing.
+	static const Str LABELS[4] = {S_FREQ, S_VPP, S_VRMS, S_DUTY};
+	static const char *const WIDEST[4] = {"888 kHz", "88.8 mV", "88.8 mV", "100 %"};
+	int16_t w[4], sum = 0;
+	for (uint8_t i = 0; i < 4; i++) {
+		w[i] = Gfx::textWidth(FONT_S, I18n::tr(LABELS[i])) + 4 + Gfx::textWidth(FONT_M, WIDEST[i]);
+		sum += w[i];
 	}
+	int16_t gap = (LCD_W - 8 - sum) / 3;
+	if (gap < 2) gap = 2;
+
+	char val[4][20];
+	if (m.freq > 0) Measure::format(val[0], sizeof val[0], m.freq, "Hz");
+	else strcpy(val[0], "--");
+	Measure::format(val[1], sizeof val[1], m.vpp, "V");
+	Measure::format(val[2], sizeof val[2], m.vrms, "V");
 	if (m.freq > 0) {
 		uint16_t d = uint16_t(m.duty * 100.0f + 0.5f);
-		buf[0] = char('0' + (d / 100) % 10);
-		buf[1] = char('0' + (d / 10) % 10);
-		buf[2] = char('0' + d % 10);
-		buf[3] = ' ';
-		buf[4] = '%';
-		buf[5] = 0;
-		char *p = buf;
-		while (p[0] == '0' && p[1] != ' ') p++;
-		measureCell(256, 62, I18n::tr(S_DUTY), p);
+		char *p = val[3];
+		if (d >= 100) *p++ = char('0' + d / 100);
+		if (d >= 10) *p++ = char('0' + (d / 10) % 10);
+		*p++ = char('0' + d % 10);
+		strcpy(p, " %");
 	} else {
-		measureCell(256, 62, I18n::tr(S_DUTY), "--");
+		strcpy(val[3], "--");
+	}
+
+	int16_t x = 4;
+	for (uint8_t i = 0; i < 4; i++) {
+		int16_t cw = i < 3 ? w[i] + gap : LCD_W - x;
+		if (i == 3 && m.clipped) {
+			Gfx::textBox(FONT_S, I18n::tr(S_CLIPPED), x, BAR_Y + 5, cw, ALIGN_LEFT, C_ERR_FG, C_BG);
+			Tft::fillRect(x, BAR_Y, cw, 5, C_BG);
+			Tft::fillRect(x, BAR_Y + 5 + FONT_S.height, cw, BAR_H - 5 - FONT_S.height, C_BG);
+		} else {
+			measureCell(x, cw, I18n::tr(LABELS[i]), val[i]);
+		}
+		x += cw;
 	}
 }
 
