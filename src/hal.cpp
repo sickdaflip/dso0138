@@ -127,15 +127,7 @@ void startPwm() {
 	TIM4->EGR = TIM_EGR_UG;
 	TIM4->CR1 = TIM_CR1_ARPE | TIM_CR1_CEN;
 
-	// TIM3 CH2 = PA7: 1 kHz square wave test signal
-	pinMode(GPIOA, 7, PIN_AF_OUTPUT);
-	TIM3->PSC = 72 - 1;          // 1 MHz
-	TIM3->ARR = 1000 - 1;        // 1 kHz
-	TIM3->CCMR1 = (6u << TIM_CCMR1_OC2M_Pos) | TIM_CCMR1_OC2PE;
-	TIM3->CCR2 = 500;
-	TIM3->CCER = TIM_CCER_CC2E;
-	TIM3->EGR = TIM_EGR_UG;
-	TIM3->CR1 = TIM_CR1_ARPE | TIM_CR1_CEN;
+	// The test signal on PA7 (TIM3) is handled by the signal generator.
 }
 
 void led(bool on) {

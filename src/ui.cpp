@@ -389,7 +389,7 @@ void hint2(const char *label, const char *value) {
 }
 
 void menu(const char *title, const MenuItem *items, uint8_t count, uint8_t selected) {
-	constexpr int16_t X = 40, W = 240, ROW = 20;
+	constexpr int16_t X = 40, W = 240, ROW = 18;
 	const int16_t h = 30 + count * ROW + 8;
 	const int16_t y0 = (LCD_H - h) / 2;
 	if (menuH != h) {
@@ -455,6 +455,22 @@ void zeroCal(uint16_t done, Range current, Coupling c) {
 		fg = c == CPL_GND ? C_OK_FG : C_WARN_FG;
 	}
 	Gfx::textBox(FONT_M, msg, X + 12, Y + H - 24, W - 24, ALIGN_CENTER, fg, C_SURFACE);
+}
+
+void genBar(const char *mode, const char *p0, const char *p1, uint8_t focus) {
+	Tft::fillRect(0, BAR_Y, LCD_W, BAR_H, C_BG);
+	int16_t x = Gfx::text(FONT_S, "GEN", 4, BAR_Y + 5, C_MUTED, C_BG) + 6;
+	const char *items[3] = {mode, p0, p1};
+	for (uint8_t i = 0; i < 3; i++) {
+		if (!items[i] || !items[i][0]) continue;
+		bool f = focus == i;
+		uint16_t fill = f ? C_ACCENT : C_TRACK;
+		int16_t w = Gfx::textWidth(FONT_M, items[i]) + 14;
+		if (x + w > LCD_W - 2) w = LCD_W - 2 - x;
+		Gfx::roundRect(x, BAR_Y + 1, w, FONT_M.height + 1, fill, C_BG);
+		Gfx::textBox(FONT_M, items[i], x + 4, BAR_Y + 1, w - 8, ALIGN_CENTER, f ? C_WHITE : C_TEXT, fill);
+		x += w + 4;
+	}
 }
 
 void about() {

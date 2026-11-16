@@ -10,6 +10,7 @@ Written from scratch and MIT licensed.
 | --- | --- |
 | ![Sine](docs/images/03_sine.png) | ![Stopped, trigger position moved](docs/images/04_triangle_stop.png) |
 | ![Settings](docs/images/05_menu.png) | ![Zero calibration](docs/images/06_zero_cal.png) |
+| ![Signal generator](docs/images/07_generator.png) | |
 
 ## Features
 
@@ -30,6 +31,8 @@ Written from scratch and MIT licensed.
 - Anti-aliased Inter fonts and a Tailwind/Preline slate palette; trace color
   selectable in the settings (white, yellow, cyan, green, orange, pink).
 - Updates from the browser without jumpers, calibration and settings are kept.
+- Signal generator on the test signal pin (0/3.3 V, software only, no extra
+  parts), see below.
 - Languages: English (US), English (UK), German, Spanish, French.
 
 ## Controls
@@ -45,6 +48,29 @@ reads their positions and shows them in the status bar.
 
 In the settings menu, **– / +** move the selection, **OK** changes or opens an
 entry and **SEL** closes the menu.
+
+## Signal generator
+
+Hold **OK** → **Signal generator**. The scope keeps running while the bottom
+bar shows the generator: **SEL** selects mode or parameter, **– / +** change
+it, **OK** returns to the measurements. The output is the test signal pin
+(red clip), so the scope can measure its own signals.
+
+| Mode | Parameters | Use |
+| --- | --- | --- |
+| Test 1 kHz | – | Stock calibration signal (default after power-up) |
+| Square | 1 Hz – 1 MHz (1-2-5), duty 5 – 95 % | Timebases, frequency and duty measurement |
+| Sweep | 2 / 5 / 10 / 20 s | Square sweeping 100 Hz → 100 kHz logarithmically |
+| Burst | 1 – 100 kHz, 1 – 20 pulses | Pulse trains with pauses, Normal/Single trigger |
+| Glitch | 1 – 100 µs | 1 kHz square with a short extra pulse every 10th period |
+| UART | 1200 – 115200 Bd | "Hello DSO138!\r\n", 8N1, repeated every 20 ms |
+| PRBS | 100 bit/s – 50 kbit/s | PRBS7 random bit pattern |
+| Servo | 0.5 – 2.5 ms | 50 Hz RC servo pulses |
+| IR remote | command 0x00 – 0xFF | NEC frame as an IR receiver outputs it (active low) |
+| Fan PWM | 0 – 100 % | 25 kHz 4-pin fan PWM |
+
+Continuous modes are hardware PWM (TIM3). Patterned modes are played by the
+TIM3 update interrupt, one segment per timer period, computed on the fly.
 
 ## Flashing
 
@@ -124,7 +150,7 @@ cd web && npm ci && npm run build && npm test   # flasher site and bootloader se
 | TFT RD / RST / CS / RS / WR | PB10 / PB11 / PC13 / PC14 / PC15 |
 | Signal input | PA0 (ADC) |
 | SEN2 / SEN1 / CPL switch sensing | PA1 / PA2 / PA3 (ADC2) |
-| Test signal 1 kHz | PA7 (TIM3 CH2) |
+| Test signal / signal generator | PA7 (TIM3 CH2) |
 | Trigger reference | PB8 (TIM4 CH3) |
 | Negative rail charge pump | PB9 (TIM4 CH4, 20 kHz) – started first at boot |
 | Buttons SEL / – / + / OK | PB12 / PB13 / PB14 / PB15 |

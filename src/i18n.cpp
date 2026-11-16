@@ -21,6 +21,8 @@ const char *const EN_US[STR_COUNT] = {
 	"Open source, MIT license",
 	"Trace color",
 	"White", "Yellow", "Cyan", "Green", "Orange", "Pink",
+	"Signal generator", "SEL: next  \xC2\xB7  -/+: change  \xC2\xB7  OK: done",
+	"Test 1 kHz", "Square", "Sweep", "Burst", "Glitch", "UART", "PRBS", "Servo", "IR remote", "Fan PWM",
 };
 
 const char *const EN_GB[STR_COUNT] = {
@@ -39,6 +41,8 @@ const char *const EN_GB[STR_COUNT] = {
 	"Open source, MIT licence",
 	"Trace colour",
 	"White", "Yellow", "Cyan", "Green", "Orange", "Pink",
+	"Signal generator", "SEL: next  \xC2\xB7  -/+: change  \xC2\xB7  OK: done",
+	"Test 1 kHz", "Square", "Sweep", "Burst", "Glitch", "UART", "PRBS", "Servo", "IR remote", "Fan PWM",
 };
 
 const char *const DE[STR_COUNT] = {
@@ -57,6 +61,8 @@ const char *const DE[STR_COUNT] = {
 	"Open Source, MIT-Lizenz",
 	"Spurfarbe",
 	"Weiß", "Gelb", "Cyan", "Grün", "Orange", "Pink",
+	"Signalgenerator", "SEL: weiter  \xC2\xB7  -/+: ändern  \xC2\xB7  OK: fertig",
+	"Test 1 kHz", "Rechteck", "Sweep", "Pulspaket", "Glitch", "UART", "PRBS", "Servo", "IR-Fernbed.", "Lüfter-PWM",
 };
 
 const char *const ES[STR_COUNT] = {
@@ -75,6 +81,8 @@ const char *const ES[STR_COUNT] = {
 	"Código abierto, licencia MIT",
 	"Color de traza",
 	"Blanco", "Amarillo", "Cian", "Verde", "Naranja", "Rosa",
+	"Generador de señal", "SEL: siguiente  \xC2\xB7  -/+: cambiar  \xC2\xB7  OK: listo",
+	"Test 1 kHz", "Cuadrada", "Barrido", "Ráfaga", "Glitch", "UART", "PRBS", "Servo", "Mando IR", "PWM ventilador",
 };
 
 const char *const FR[STR_COUNT] = {
@@ -94,6 +102,8 @@ const char *const FR[STR_COUNT] = {
 	"Open source, licence MIT",
 	"Couleur de trace",
 	"Blanc", "Jaune", "Cyan", "Vert", "Orange", "Rose",
+	"Générateur de signaux", "SEL : suivant  \xC2\xB7  -/+ : changer  \xC2\xB7  OK : terminé",
+	"Test 1 kHz", "Carré", "Balayage", "Salve", "Glitch", "UART", "PRBS", "Servo", "Télécommande IR", "PWM ventilateur",
 };
 
 const char *const *const TABLES[LANG_COUNT] = {EN_US, EN_GB, DE, ES, FR};

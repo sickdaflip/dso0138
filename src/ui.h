@@ -53,6 +53,9 @@ void zeroCal(uint16_t done, Range current, Coupling c);
 
 void about();
 
+/** Signal generator controls in the bottom bar; `focus` 0 = mode. */
+void genBar(const char *mode, const char *p0, const char *p1, uint8_t focus);
+
 /** Screen column of the trigger point. */
 int16_t triggerColumn(const Settings &s);
 

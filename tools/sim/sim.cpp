@@ -150,14 +150,27 @@ int main(int argc, char **argv) {
 		{I18n::tr(S_LANGUAGE), I18n::langName(lang)},
 		{I18n::tr(S_MEASUREMENTS), I18n::tr(S_ON)},
 		{I18n::tr(S_TRACE_COLOR), I18n::tr(S_COL_WHITE)},
+		{I18n::tr(S_GENERATOR), I18n::tr(S_GEN_TEST)},
 		{I18n::tr(S_ZERO_CAL), nullptr},
 		{I18n::tr(S_CENTER), nullptr},
 		{I18n::tr(S_FACTORY), nullptr},
 		{I18n::tr(S_ABOUT), nullptr},
 		{I18n::tr(S_BACK), nullptr},
 	};
-	Ui::menu(I18n::tr(S_MENU), items, 8, 2);
+	Ui::menu(I18n::tr(S_MENU), items, 9, 3);
 	snprintf(path, sizeof path, "%s/05_menu.ppm", dir); save(path);
+
+	// Signal generator: UART at 9600 baud, decoded on screen as square bits
+	settingsDefaults(cfg);
+	cfg.language = lang;
+	cfg.timebase = 6;
+	cfg.trigLevel = 160;
+	cfg.vpos = -40;
+	synth(SQUARE, 1000, 1.65f, 1.65f, RNG_1V, 0.04f);
+	snprintf(path, sizeof path, "%s/menu_bg.tmp", dir);
+	scope(path, RNG_1V, RS_RUN, FOCUS_TIMEBASE);
+	Ui::genBar(I18n::tr(S_GEN_SQUARE), "1 kHz", "50 %", 1);
+	snprintf(path, sizeof path, "%s/07_generator.ppm", dir); save(path);
 
 	Ui::layout();
 	Ui::zeroCal(0x1F, RNG_100mV, CPL_GND);

@@ -5,6 +5,7 @@
 #include <string.h>
 #include "acq.h"
 #include "buttons.h"
+#include "gen.h"
 #include "hal.h"
 #include "i18n.h"
 #include "measure.h"
@@ -14,10 +15,10 @@
 
 namespace {
 
-enum Screen : uint8_t { SCR_SCOPE, SCR_MENU, SCR_ZERO, SCR_ABOUT };
+enum Screen : uint8_t { SCR_SCOPE, SCR_MENU, SCR_ZERO, SCR_ABOUT, SCR_GEN };
 
 enum MenuEntry : uint8_t {
-	MI_LANGUAGE, MI_MEASURE, MI_COLOR, MI_ZERO, MI_CENTER, MI_FACTORY, MI_ABOUT, MI_BACK, MI_COUNT
+	MI_LANGUAGE, MI_MEASURE, MI_COLOR, MI_GEN, MI_ZERO, MI_CENTER, MI_FACTORY, MI_ABOUT, MI_BACK, MI_COUNT
 };
 
 constexpr uint32_t SWITCH_POLL_MS = 100;
@@ -46,6 +47,8 @@ uint32_t dirtySince = 0;
 uint32_t hintUntil = 0;
 uint32_t lastFrameAt = 0;
 uint32_t captureStart = 0;
+
+uint8_t genFocus = 0;  // 0 = mode, 1/2 = parameters
 
 uint16_t zeroDone = 0;
 int8_t zeroStableRange = -1;
@@ -249,6 +252,7 @@ void drawMenu() {
 		{I18n::tr(S_LANGUAGE), I18n::langName(cfg.language)},
 		{I18n::tr(S_MEASUREMENTS), I18n::tr(cfg.showMeasurements ? S_ON : S_OFF)},
 		{I18n::tr(S_TRACE_COLOR), I18n::tr(Str(S_COL_WHITE + cfg.traceColor % TRACE_COLOR_COUNT))},
+		{I18n::tr(S_GENERATOR), I18n::tr(Str(S_GEN_TEST + Gen::mode()))},
 		{I18n::tr(S_ZERO_CAL), nullptr},
 		{I18n::tr(S_CENTER), nullptr},
 		{I18n::tr(S_FACTORY), nullptr},
@@ -261,6 +265,22 @@ void drawMenu() {
 void openScope() {
 	screen = SCR_SCOPE;
 	drawScope();
+	if (running) startCapture();
+}
+
+void drawGen() {
+	char p0[20] = "", p1[20] = "";
+	uint8_t n = Gen::paramCount();
+	if (n > 0) Gen::describe(0, p0, sizeof p0);
+	if (n > 1) Gen::describe(1, p1, sizeof p1);
+	Ui::genBar(I18n::tr(Str(S_GEN_TEST + Gen::mode())), p0, p1, genFocus);
+}
+
+void openGen() {
+	screen = SCR_GEN;
+	genFocus = 0;
+	drawScope();
+	drawGen();
 	if (running) startCapture();
 }
 
@@ -301,6 +321,9 @@ void menuActivate() {
 		cfg.traceColor = (cfg.traceColor + 1) % TRACE_COLOR_COUNT;
 		markDirty();
 		drawMenu();
+		break;
+	case MI_GEN:
+		openGen();
 		break;
 	case MI_ZERO:
 		openZeroCal();
@@ -448,6 +471,33 @@ void handleKey(Key k) {
 		}
 		break;
 
+	case SCR_GEN:
+		switch (k) {
+		case KEY_SEL:
+			genFocus = (genFocus + 1) % (Gen::paramCount() + 1);
+			drawGen();
+			break;
+		case KEY_PLUS:
+		case KEY_MINUS: {
+			int8_t dir = k == KEY_PLUS ? 1 : -1;
+			if (genFocus == 0) {
+				Gen::setMode(Gen::Mode((Gen::mode() + Gen::GEN_MODE_COUNT + dir) % Gen::GEN_MODE_COUNT));
+			} else {
+				Gen::adjust(genFocus - 1, dir);
+			}
+			drawGen();
+			break;
+		}
+		case KEY_OK:
+		case KEY_OK_LONG:
+			screen = SCR_SCOPE;
+			Ui::measurements(view());
+			break;
+		default:
+			break;
+		}
+		break;
+
 	case SCR_ZERO:
 	case SCR_ABOUT:
 		if (k == KEY_OK || k == KEY_SEL || k == KEY_OK_LONG) {
@@ -466,7 +516,7 @@ void pollSwitches(uint32_t now) {
 	if (sw.range == range && sw.coupling == coupling) return;
 	range = sw.range;
 	coupling = sw.coupling;
-	if (screen == SCR_SCOPE) {
+	if (screen == SCR_SCOPE || screen == SCR_GEN) {
 		Ui::status(view());
 		redrawFrame();
 		if (running) startCapture();
@@ -488,7 +538,7 @@ void onFrame(uint32_t now) {
 	View v = view();
 	Ui::trace(v);
 	Ui::markers(v);
-	if (int32_t(now - hintUntil) >= 0) Ui::measurements(v);
+	if (screen == SCR_SCOPE && int32_t(now - hintUntil) >= 0) Ui::measurements(v);
 	if (streaming && now - lastStream >= STREAM_MS) {
 		lastStream = now;
 		sendFrame();
@@ -528,6 +578,7 @@ int main() {
 	hal::bootCheck();  // jumps to the ROM bootloader after a "boot" request
 	hal::init();
 	hal::startPwm();  // negative rail for the analog front end first
+	Gen::begin();     // 1 kHz test signal
 	Tft::begin();
 	Buttons::begin();
 	hal::serialInit(SERIAL_BAUD);
@@ -552,13 +603,14 @@ int main() {
 		pollSwitches(now);
 		pollSerial();
 
-		if (screen == SCR_SCOPE) {
+		Gen::poll(now);
+		if (screen == SCR_SCOPE || screen == SCR_GEN) {
 			if (running && Acq::poll(now)) onFrame(now);
 			if (now - lastStatus >= 100) {
 				lastStatus = now;
 				Ui::status(view());
 			}
-			if (hintUntil && int32_t(now - hintUntil) >= 0) {
+			if (screen == SCR_SCOPE && hintUntil && int32_t(now - hintUntil) >= 0) {
 				hintUntil = 0;
 				Ui::measurements(view());
 			}
@@ -574,7 +626,7 @@ int main() {
 			dirty = false;
 			Acq::stop();
 			Storage::save(cfg);
-			if (screen == SCR_SCOPE && running) startCapture();
+			if ((screen == SCR_SCOPE || screen == SCR_GEN) && running) startCapture();
 		}
 		hal::led(Acq::state() == Acq::ACQ_POST || Acq::state() == Acq::ACQ_ROLL);
 	}

@@ -32,7 +32,7 @@ static inline void pinHigh(GPIO_TypeDef *port, uint8_t pin) { port->BSRR = 1u <<
 static inline void pinLow(GPIO_TypeDef *port, uint8_t pin) { port->BRR = 1u << pin; }
 static inline bool pinRead(GPIO_TypeDef *port, uint8_t pin) { return port->IDR & (1u << pin); }
 
-/** Starts the charge pump, trigger reference and 1 kHz test signal. */
+/** Starts the charge pump and the trigger reference. */
 void startPwm();
 
 void led(bool on);
