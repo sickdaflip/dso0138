@@ -19,6 +19,8 @@ const char *const EN_US[STR_COUNT] = {
 	"Timebase", "Trigger mode", "Trigger edge", "Trigger level", "Vertical position",
 	"Trigger position",
 	"Open source, MIT license",
+	"Trace color",
+	"White", "Yellow", "Cyan", "Green", "Orange", "Pink",
 };
 
 const char *const EN_GB[STR_COUNT] = {
@@ -35,6 +37,8 @@ const char *const EN_GB[STR_COUNT] = {
 	"Timebase", "Trigger mode", "Trigger edge", "Trigger level", "Vertical position",
 	"Trigger position",
 	"Open source, MIT licence",
+	"Trace colour",
+	"White", "Yellow", "Cyan", "Green", "Orange", "Pink",
 };
 
 const char *const DE[STR_COUNT] = {
@@ -51,6 +55,8 @@ const char *const DE[STR_COUNT] = {
 	"Zeitbasis", "Triggermodus", "Triggerflanke", "Triggerpegel", "Vertikale Position",
 	"Triggerposition",
 	"Open Source, MIT-Lizenz",
+	"Spurfarbe",
+	"Weiß", "Gelb", "Cyan", "Grün", "Orange", "Pink",
 };
 
 const char *const ES[STR_COUNT] = {
@@ -67,6 +73,8 @@ const char *const ES[STR_COUNT] = {
 	"Base de tiempo", "Modo de disparo", "Flanco", "Nivel de disparo", "Posición vertical",
 	"Posición del disparo",
 	"Código abierto, licencia MIT",
+	"Color de traza",
+	"Blanco", "Amarillo", "Cian", "Verde", "Naranja", "Rosa",
 };
 
 const char *const FR[STR_COUNT] = {
@@ -84,6 +92,8 @@ const char *const FR[STR_COUNT] = {
 	"Base de temps", "Mode de déclenchement", "Front", "Niveau de déclenchement",
 	"Position verticale", "Position du déclenchement",
 	"Open source, licence MIT",
+	"Couleur de trace",
+	"Blanc", "Jaune", "Cyan", "Vert", "Orange", "Rose",
 };
 
 const char *const *const TABLES[LANG_COUNT] = {EN_US, EN_GB, DE, ES, FR};

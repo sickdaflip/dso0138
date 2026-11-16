@@ -27,7 +27,7 @@ struct View {
 
 namespace Ui {
 
-void splash();
+void splash(uint8_t traceColor);
 
 /** Clears the screen and draws the static layout; forgets the old trace. */
 void layout();

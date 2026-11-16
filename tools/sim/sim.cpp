@@ -109,7 +109,7 @@ int main(int argc, char **argv) {
 	I18n::set(lang);
 	cfg.language = lang;
 
-	Ui::splash();
+	Ui::splash(cfg.traceColor);
 	snprintf(path, sizeof path, "%s/01_boot.ppm", dir); save(path);
 
 	// 1 kHz test signal (3.3 V square) at 1 V/div, 0.2 ms/div
@@ -124,6 +124,7 @@ int main(int argc, char **argv) {
 	cfg.timebase = 8;
 	cfg.trigLevel = 40;
 	cfg.vpos = 0;
+	cfg.traceColor = 2;  // cyan, shows the color option
 	synth(SINE, 50, 1.4f, 0, RNG_500mV, 0.03f);
 	snprintf(path, sizeof path, "%s/03_sine.ppm", dir);
 	scope(path, RNG_500mV, RS_RUN, FOCUS_LEVEL);
@@ -148,13 +149,14 @@ int main(int argc, char **argv) {
 	Ui::MenuItem items[] = {
 		{I18n::tr(S_LANGUAGE), I18n::langName(lang)},
 		{I18n::tr(S_MEASUREMENTS), I18n::tr(S_ON)},
+		{I18n::tr(S_TRACE_COLOR), I18n::tr(S_COL_WHITE)},
 		{I18n::tr(S_ZERO_CAL), nullptr},
 		{I18n::tr(S_CENTER), nullptr},
 		{I18n::tr(S_FACTORY), nullptr},
 		{I18n::tr(S_ABOUT), nullptr},
 		{I18n::tr(S_BACK), nullptr},
 	};
-	Ui::menu(I18n::tr(S_MENU), items, 7, 2);
+	Ui::menu(I18n::tr(S_MENU), items, 8, 2);
 	snprintf(path, sizeof path, "%s/05_menu.ppm", dir); save(path);
 
 	Ui::layout();

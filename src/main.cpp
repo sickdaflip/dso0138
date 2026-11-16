@@ -17,7 +17,7 @@ namespace {
 enum Screen : uint8_t { SCR_SCOPE, SCR_MENU, SCR_ZERO, SCR_ABOUT };
 
 enum MenuEntry : uint8_t {
-	MI_LANGUAGE, MI_MEASURE, MI_ZERO, MI_CENTER, MI_FACTORY, MI_ABOUT, MI_BACK, MI_COUNT
+	MI_LANGUAGE, MI_MEASURE, MI_COLOR, MI_ZERO, MI_CENTER, MI_FACTORY, MI_ABOUT, MI_BACK, MI_COUNT
 };
 
 constexpr uint32_t SWITCH_POLL_MS = 100;
@@ -175,6 +175,8 @@ void sendFrame() {
 	putInt(f.roll);
 	hal::serialWrite(" col=");
 	putInt(Ui::triggerColumn(cfg));
+	hal::serialWrite(" color=");
+	putInt(cfg.traceColor);
 	hal::serialWrite("\r\n");
 	for (uint16_t i = 0; i < f.n; i++) {
 		putInt(f.s[i]);
@@ -246,6 +248,7 @@ void drawMenu() {
 	Ui::MenuItem items[MI_COUNT] = {
 		{I18n::tr(S_LANGUAGE), I18n::langName(cfg.language)},
 		{I18n::tr(S_MEASUREMENTS), I18n::tr(cfg.showMeasurements ? S_ON : S_OFF)},
+		{I18n::tr(S_TRACE_COLOR), I18n::tr(Str(S_COL_WHITE + cfg.traceColor % TRACE_COLOR_COUNT))},
 		{I18n::tr(S_ZERO_CAL), nullptr},
 		{I18n::tr(S_CENTER), nullptr},
 		{I18n::tr(S_FACTORY), nullptr},
@@ -291,6 +294,11 @@ void menuActivate() {
 		break;
 	case MI_MEASURE:
 		cfg.showMeasurements = !cfg.showMeasurements;
+		markDirty();
+		drawMenu();
+		break;
+	case MI_COLOR:
+		cfg.traceColor = (cfg.traceColor + 1) % TRACE_COLOR_COUNT;
 		markDirty();
 		drawMenu();
 		break;
@@ -525,7 +533,7 @@ int main() {
 	Storage::load(cfg);
 	I18n::set(cfg.language);
 	Acq::begin();
-	Ui::splash();
+	Ui::splash(cfg.traceColor);
 	hal::delayMs(1200);
 
 	Acq::Switches sw = Acq::readSwitches();

@@ -62,10 +62,14 @@ struct Settings {
 	int16_t hpos;                    // trigger column offset from the grid center (px)
 	int16_t zero[RANGE_COUNT];       // ADC count at 0 V for each range
 	uint8_t showMeasurements;
-	uint8_t reserved[3];
+	uint8_t traceColor;              // index into the trace palette
+	uint8_t reserved[2];
 };
 
 void settingsDefaults(Settings &s);
+
+/** Trace colors selectable in the settings menu (white is the default). */
+constexpr uint8_t TRACE_COLOR_COUNT = 6;
 
 // ---------------------------------------------------------------------------
 // Captured frame

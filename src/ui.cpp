@@ -41,6 +41,19 @@ Chip chips[CH_COUNT] = {
 	{257, 62, "", 0xFF},
 };
 
+const uint16_t TRACE_COLORS[TRACE_COLOR_COUNT] = {
+	0xFFDF,  // #F8FAFC white
+	0xFE62,  // #FACC15 yellow
+	0x269D,  // #22D3EE cyan
+	0x4EF0,  // #4ADE80 green
+	0xFC87,  // #FB923C orange
+	0xF396,  // #F472B6 pink
+};
+
+uint16_t traceColor(uint8_t i) {
+	return TRACE_COLORS[i < TRACE_COLOR_COUNT ? i : 0];
+}
+
 enum ChipStyle : uint8_t { ST_NORMAL, ST_FOCUS, ST_OK, ST_WARN, ST_ERR, ST_INFO };
 
 uint16_t gridColor(int16_t rx, int16_t ry) {
@@ -130,7 +143,7 @@ int16_t triggerColumn(const Settings &s) {
 	return MID_X + s.hpos;
 }
 
-void splash() {
+void splash(uint8_t color) {
 	Tft::fillScreen(C_BG);
 	const int16_t y = 84;
 	Gfx::textBox(FONT_L, "DSO138", 0, y, LCD_W, ALIGN_CENTER, C_WHITE, C_BG);
@@ -141,7 +154,7 @@ void splash() {
 	static const int8_t WAVE[] = {0, 3, 5, 6, 5, 3, 0, -3, -5, -6, -5, -3};
 	for (int16_t x = 0; x < 96; x++) {
 		int16_t yy = y - 18 + WAVE[x % 12];
-		Tft::fillRect(LCD_W / 2 - 48 + x, yy, 1, 2, C_TRACE);
+		Tft::fillRect(LCD_W / 2 - 48 + x, yy, 1, 2, traceColor(color));
 	}
 }
 
@@ -191,6 +204,7 @@ void trace(const View &v) {
 	const bool oneToOne = !f.roll && f.dt > pxTime * 0.999f && f.dt < pxTime * 1.001f;
 	const float step = pxTime / f.dt;
 	const bool gnd = f.coupling == CPL_GND;
+	const uint16_t color = traceColor(s.traceColor);
 
 	// Pass 1: row per column, -1 where there is no data
 	static int16_t rows[GRID_W];
@@ -254,7 +268,7 @@ void trace(const View &v) {
 			}
 		}
 		if (top >= 0) {
-			Tft::fillRect(GRID_X + x, GRID_Y + top, 1, bot - top + 1, C_TRACE);
+			Tft::fillRect(GRID_X + x, GRID_Y + top, 1, bot - top + 1, color);
 		}
 		oldTop[x] = top;
 		oldBot[x] = bot;

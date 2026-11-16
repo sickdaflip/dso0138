@@ -27,5 +27,6 @@ void settingsDefaults(Settings &s) {
 	s.hpos = 0;
 	for (auto &z : s.zero) z = 2060;  // about 1.66 V at the ADC input
 	s.showMeasurements = 1;
+	s.traceColor = 0;
 	for (auto &r : s.reserved) r = 0;
 }

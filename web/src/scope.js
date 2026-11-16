@@ -69,6 +69,9 @@ export function si(value, unit, digits = 3) {
 	return `${x.toFixed(d)} ${sym}${unit}`;
 }
 
+/** Same order as the firmware's trace palette (settings menu). */
+export const TRACE_COLORS = ['#f8fafc', '#facc15', '#22d3ee', '#4ade80', '#fb923c', '#f472b6'];
+
 /** Draws a 12 x 8 division scope screen in the firmware's colors. */
 export function draw(canvas, frame) {
 	const ctx = canvas.getContext('2d');
@@ -110,7 +113,7 @@ export function draw(canvas, frame) {
 	ctx.stroke();
 	ctx.setLineDash([]);
 
-	ctx.strokeStyle = '#f8fafc';
+	ctx.strokeStyle = TRACE_COLORS[frame.color] || TRACE_COLORS[0];
 	ctx.lineWidth = 1.5;
 	ctx.lineJoin = 'round';
 	ctx.beginPath();

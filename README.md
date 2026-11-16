@@ -27,7 +27,9 @@ Written from scratch and MIT licensed.
 - Zero calibration for all nine input ranges, stored in flash.
 - Settings stored in the last flash page with wear levelling.
 - Serial interface on J5 (115200 8N1) with waveform export.
-- Anti-aliased Inter fonts and a Tailwind/Preline slate palette.
+- Anti-aliased Inter fonts and a Tailwind/Preline slate palette; trace color
+  selectable in the settings (white, yellow, cyan, green, orange, pink).
+- Updates from the browser without jumpers, calibration and settings are kept.
 - Languages: English (US), English (UK), German, Spanish, French.
 
 ## Controls
@@ -134,8 +136,9 @@ select the range. Settings live in flash page 63 (0x0800FC00).
 
 ## Status
 
-Tested on a 109-13800-00C board: display, timer modes, trigger, measurements,
-zero calibration, flasher and live view work. The interleaved 10/20 µs/div
+1.0.0, tested on a 109-13800-00C board: display, timer modes, trigger,
+measurements, zero calibration, flasher (including jumper-free updates) and
+live view work. The interleaved 10/20 µs/div
 mode and roll mode still need more real-world testing.
 
 ## License
