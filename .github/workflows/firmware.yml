@@ -71,6 +71,7 @@ jobs:
           cd web
           node test/flash.test.mjs ../dist/dso138-open-*.bin
           node test/flash.test.mjs ../dist/dso138-open-*.hex
+          node test/parser.test.mjs
 
       - uses: actions/upload-artifact@v4
         with:

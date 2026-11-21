@@ -214,11 +214,18 @@ void sendFrame(bool incremental = false) {
 	hal::serialWrite(" color=");
 	putInt(cfg.traceColor);
 	hal::serialWrite("\r\n");
+	uint16_t sum = 0;
 	for (uint16_t i = first; i < f.n; i++) {
 		putInt(f.s[i]);
+		sum = uint16_t(sum + f.s[i]);
 		hal::serialPutc(((i - first) % 32 == 31 || i == f.n - 1) ? '\n' : ',');
 	}
-	hal::serialWrite("#end\r\n");
+	// count and 16-bit sum let the host reject frames damaged on the way
+	hal::serialWrite("#end n=");
+	putInt(f.n - first);
+	hal::serialWrite(" sum=");
+	putInt(sum);
+	hal::serialWrite("\r\n");
 }
 
 void sendMeasurements() {

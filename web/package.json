@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "build": "node build.mjs",
-    "test": "node test/flash.test.mjs"
+    "test": "node test/flash.test.mjs && node test/parser.test.mjs"
   },
   "devDependencies": {
     "@tailwindcss/cli": "~4.1.0",

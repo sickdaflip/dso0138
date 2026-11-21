@@ -131,7 +131,7 @@ Serial commands (115200 8N1, line based):
 | Command | Response |
 | --- | --- |
 | `i` | Firmware name and version |
-| `w` | `#frame dt=… n=… append=… trig=… zero=… vpc=… vdiv=… tdiv=… cpl=… roll=… col=…`, raw ADC counts (32 per line), `#end` |
+| `w` | `#frame dt=… n=… append=… trig=… zero=… vpc=… vdiv=… tdiv=… cpl=… roll=… col=…`, raw ADC counts (32 per line), `#end n=… sum=…` (sample count and 16-bit sum; the web view drops frames that arrive damaged) |
 | `m` | `#meas freq=… vpp=… vrms=… vavg=… vmax=… vmin=… duty=…` |
 | `s1` / `s0` | Stream frames on / off |
 | `boot` | `#boot`, then restart into the STM32 serial bootloader (115200 8E1) |

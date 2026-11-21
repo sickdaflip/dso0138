@@ -12,6 +12,23 @@ export class FrameParser {
 		this.onState = onState;
 		this.onGenDesc = onGenDesc;
 		this.cur = null;
+		this.dropped = 0;   // frames rejected because they arrived damaged
+	}
+
+	parseKV(text) {
+		const out = {};
+		for (const kv of text.trim().split(/\s+/)) {
+			const [k, v] = kv.split('=');
+			if (k) out[k] = Number(v);
+		}
+		return out;
+	}
+
+	/** A damaged frame is dropped instead of being shown or exported. */
+	reject(why) {
+		this.dropped++;
+		this.onInfo?.(`#dropped frame (${why}), ${this.dropped} so far`);
+		this.cur = null;
 	}
 
 	line(text) {
@@ -25,18 +42,38 @@ export class FrameParser {
 		} else if (/^#gd[01] /.test(text)) {
 			this.onGenDesc?.(Number(text[3]), text.slice(5));
 		} else if (text.startsWith('#frame')) {
-			const meta = {};
-			for (const kv of text.slice(7).trim().split(/\s+/)) {
-				const [k, v] = kv.split('=');
-				meta[k] = Number(v);
-			}
+			if (this.cur) this.reject('no end marker');
+			const meta = this.parseKV(text.slice(7));
+			const ok = ['dt', 'n', 'trig', 'zero', 'vpc', 'vdiv', 'tdiv'].every((k) => Number.isFinite(meta[k]));
+			if (!ok) { this.reject('damaged header'); return; }
 			this.cur = { ...meta, samples: [] };
 		} else if (text.startsWith('#end')) {
-			if (this.cur && this.cur.samples.length) this.onFrame(this.cur);
+			if (!this.cur) return;  // the header was lost: the frame was already dropped
+			const end = this.parseKV(text.slice(4));
+			const s = this.cur.samples;
+			const sum = s.reduce((a, v) => (a + v) & 0xffff, 0);
+			if (s.length !== this.cur.n || (Number.isFinite(end.n) && end.n !== s.length)) {
+				this.reject(`${s.length} of ${this.cur.n} samples`);
+			} else if (Number.isFinite(end.sum) && end.sum !== sum) {
+				this.reject('checksum');
+			} else if (s.length) {
+				const f = this.cur;
+				this.cur = null;
+				this.onFrame(f);
+			}
 			this.cur = null;
-		} else if (this.cur && /^[\d,]+$/.test(text)) {
-			for (const v of text.split(',')) if (v) this.cur.samples.push(Number(v));
+		} else if (/^[\d,]+$/.test(text)) {
+			// sample row; without a header it belongs to a lost frame
+			if (!this.cur) return;
+			if (!/^\d+(,\d+)*,?$/.test(text)) { this.reject('damaged row'); return; }
+			for (const v of text.split(',')) {
+				if (!v) continue;
+				const n = Number(v);
+				if (n > 4095) { this.reject('value out of range'); return; }
+				this.cur.samples.push(n);
+			}
 		} else if (text && !text.startsWith('#')) {
+			if (this.cur) { this.reject('unexpected text'); return; }
 			this.onInfo?.(text);
 		}
 	}

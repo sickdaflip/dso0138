@@ -27,17 +27,28 @@ export class SerialLink {
 	}
 
 	async readLoop() {
-		try {
-			for (;;) {
-				const { value, done } = await this.reader.read();
-				if (done) break;
-				if (!value) continue;
-				for (const b of value) this.buffer.push(b);
-				if (this.onLine) this.feedLines(value);
-				this.wake();
+		// Framing, parity or overrun errors end the current reader but leave
+		// the port usable: take a new reader and keep going. Only a closed or
+		// unplugged port ends the loop.
+		while (this.reader) {
+			try {
+				for (;;) {
+					const { value, done } = await this.reader.read();
+					if (done) return;
+					if (!value) continue;
+					for (const b of value) this.buffer.push(b);
+					if (this.onLine) this.feedLines(value);
+					this.wake();
+				}
+			} catch (e) {
+				if (this.closing || !this.port.readable) return;
+				this.onError?.(e);
+				this.lineBuf = '';
+				try {
+					this.reader.releaseLock();
+				} catch { /* already released */ }
+				this.reader = this.port.readable.getReader();
 			}
-		} catch {
-			// Port closed or device unplugged; close() handles cleanup.
 		}
 	}
 
@@ -86,6 +97,7 @@ export class SerialLink {
 	}
 
 	async close() {
+		this.closing = true;
 		try {
 			if (this.reader) {
 				await this.reader.cancel();

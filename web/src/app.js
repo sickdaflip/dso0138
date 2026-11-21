@@ -235,6 +235,7 @@ Alpine.data('dso', () => ({
 			(i, text) => { this.genDesc[i] = text; },
 		);
 		link.onLine = (l) => parser.line(l);
+		link.onError = (e) => this.addLog(`Serial error: ${e.name || e.message}, reading continues`);
 		this.link = link;
 		await link.writeText('i\n');
 		await sleep(100);
