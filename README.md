@@ -121,7 +121,7 @@ This file is copyright JYE Tech and not covered by the MIT license of this proje
 
 With the jumpers open, connect the same adapter and click **Connect** in the
 live view section of the flasher page. The waveform is streamed every 0.5 s and
-can be exported as CSV. The remote control section below then operates every
+can be exported as CSV: **Capture** keeps the frame currently shown for the export while the live view keeps running. The remote control section below then operates every
 setting of the DSO138: run/stop, timebase, trigger mode, edge and level,
 positions, measurements, trace color, device language and the signal
 generator. V/div and coupling are set by the slide switches and are shown.

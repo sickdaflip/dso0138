@@ -49,6 +49,7 @@ Alpine.data('dso', () => ({
 	TRACE_COLORS,
 	frameCount: 0,
 	capturedAt: '',
+	snapshot: null,     // frame kept by "Capture" for the CSV export
 
 	init() {
 		this.$watch('lang', (l) => {
@@ -253,6 +254,8 @@ Alpine.data('dso', () => ({
 		this.link = null;
 		this.streaming = false;
 		this.dev = null;
+		this.snapshot = null;
+		this.capturedAt = '';
 	},
 
 	// Remote control ----------------------------------------------------------
@@ -297,29 +300,33 @@ Alpine.data('dso', () => ({
 	async setStream(on) {
 		if (!this.link) return;
 		this.streaming = on;
-		if (on) this.capturedAt = '';
 		await this.link.writeText(on ? 's1\n' : 's0\n');
 	},
 
 	/**
-	 * Single capture: stops streaming and fetches one frame, so the view
-	 * freezes on it. Gives feedback when nothing arrives.
+	 * Takes a snapshot for the CSV export. While streaming, the frame on the
+	 * screen is kept and the live view keeps running; without a stream one
+	 * frame is requested from the device.
 	 */
 	async capture() {
 		if (!this.link) return;
-		if (this.streaming) await this.setStream(false);
-		const before = this.frameCount;
-		this.capturedAt = '';
-		await this.link.writeText('w\n');
-		for (let i = 0; i < 40 && this.frameCount === before; i++) await sleep(50);
-		this.capturedAt = this.frameCount === before
-			? this.t('noFrame')
-			: this.t('capturedAt', { time: new Date().toLocaleTimeString() });
+		if (!this.streaming || !this.frame) {
+			const before = this.frameCount;
+			await this.link.writeText('w\n');
+			for (let i = 0; i < 40 && this.frameCount === before; i++) await sleep(50);
+			if (this.frameCount === before) {
+				this.capturedAt = this.t('noFrame');
+				return;
+			}
+		}
+		this.snapshot = { ...this.frame, samples: this.frame.samples.slice() };
+		this.capturedAt = this.t('capturedAt', { time: new Date().toLocaleTimeString() });
 	},
 
 	exportCsv() {
-		if (!this.frame) return;
-		const url = URL.createObjectURL(new Blob([toCsv(this.frame)], { type: 'text/csv' }));
+		const frame = this.snapshot || this.frame;
+		if (!frame) return;
+		const url = URL.createObjectURL(new Blob([toCsv(frame)], { type: 'text/csv' }));
 		const a = document.createElement('a');
 		a.href = url;
 		a.download = `dso138-${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
