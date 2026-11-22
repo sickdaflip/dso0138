@@ -10,7 +10,7 @@ mkdirSync(`${out}/src/vendor`, { recursive: true });
 mkdirSync(`${out}/firmware/original`, { recursive: true });
 
 cpSync('index.html', `${out}/index.html`);
-for (const f of ['app.js', 'flash.js', 'hex.js', 'i18n.js', 'scope.js', 'serial.js', 'stm32.js']) {
+for (const f of ['app.js', 'flash.js', 'hex.js', 'i18n.js', 'recorder.js', 'scope.js', 'serial.js', 'stm32.js']) {
 	cpSync(`src/${f}`, `${out}/src/${f}`);
 }
 cpSync('node_modules/alpinejs/dist/module.esm.min.js', `${out}/src/vendor/alpine.esm.js`);

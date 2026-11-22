@@ -126,6 +126,15 @@ setting of the DSO138: run/stop, timebase, trigger mode, edge and level,
 positions, measurements, trace color, device language and the signal
 generator. V/div and coupling are set by the slide switches and are shown.
 
+**Record** writes the incoming signal into one CSV (`time_s, volts, segment`)
+until stopped. In roll mode (Auto, 100 ms/div and slower) every sample is
+streamed once, so the recording is gap-free; roll frames carry the running
+sample index (`pos=`), which keeps the time axis exact even if a frame is lost
+on the line (the gap starts a new segment). Faster timebases record the
+triggered frames one after another, each as its own segment. The serial line
+carries about 2000 samples per second, which is why gap-free recording is
+limited to roll mode.
+
 Serial commands (115200 8N1, line based):
 
 | Command | Response |

@@ -209,6 +209,12 @@ void sendFrame(bool incremental = false) {
 	putInt(f.coupling);
 	hal::serialWrite(" roll=");
 	putInt(f.roll);
+	if (f.roll) {
+		// running index of the first sample sent, so a recording keeps exact
+		// time even if a frame gets lost on the way
+		hal::serialWrite(" pos=");
+		putInt(int32_t(f.total - (f.n - first)));
+	}
 	hal::serialWrite(" col=");
 	putInt(Ui::triggerColumn(cfg));
 	hal::serialWrite(" color=");

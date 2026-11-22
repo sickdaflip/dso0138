@@ -191,6 +191,22 @@
 					<span x-show="capturedAt" class="self-center text-sm text-gray-500 dark:text-neutral-400" x-text="capturedAt"></span>
 				</div>
 
+				<div class="rounded-lg border border-gray-200 p-3 dark:border-neutral-700">
+					<div class="flex flex-wrap items-center gap-2">
+						<button type="button" @click="toggleRecording()" :disabled="!link"
+							class="inline-flex items-center gap-x-2 rounded-lg px-3 py-2 text-sm font-medium text-white disabled:pointer-events-none disabled:opacity-50"
+							:class="recOn ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'">
+							<span class="size-2 rounded-full bg-white" :class="recOn && 'animate-pulse'"></span>
+							<span x-text="recOn ? t('recStop') : t('record')"></span>
+						</button>
+						<button type="button" @click="exportRecording()" :disabled="recOn || !recCount"
+							class="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white"
+							x-text="t('recSave')"></button>
+						<span x-show="recOn || recCount" class="text-sm tabular-nums text-gray-600 dark:text-neutral-400" x-text="recText"></span>
+					</div>
+					<p class="mt-2 text-xs text-gray-500 dark:text-neutral-400" x-text="t('recHint')"></p>
+				</div>
+
 				<details class="mt-auto">
 					<summary class="cursor-pointer text-sm font-medium text-gray-700 dark:text-neutral-300" x-text="t('log')"></summary>
 					<pre class="mt-2 max-h-48 overflow-auto rounded-lg bg-gray-100 p-3 text-xs text-gray-700 dark:bg-neutral-900 dark:text-neutral-400" x-text="log.join('\n')"></pre>

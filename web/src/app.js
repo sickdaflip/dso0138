@@ -6,6 +6,11 @@ import { connect, erase, program, verify, backup } from './flash.js';
 import { loadImage, parseHex, FLASH_BASE } from './hex.js';
 import { FrameParser, draw, measure, si, toCsv, TRACE_COLORS } from './scope.js';
 import { languages, detectLanguage, translate } from './i18n.js';
+import { Recorder } from './recorder.js';
+
+// Kept outside Alpine's reactive data: thousands of samples per second
+// would otherwise trigger an update for every single value.
+const recorder = new Recorder();
 
 const ORIGINAL = 'firmware/original/113-13801-061.hex';
 
@@ -50,6 +55,9 @@ Alpine.data('dso', () => ({
 	frameCount: 0,
 	capturedAt: '',
 	snapshot: null,     // frame kept by "Capture" for the CSV export
+	recOn: false,
+	recCount: 0,
+	recText: '',
 
 	init() {
 		this.$watch('lang', (l) => {
@@ -217,12 +225,14 @@ Alpine.data('dso', () => ({
 				if (!Number.isFinite(f.tdiv) && this.dev) f.tdiv = TIMEBASES[this.dev.tb];
 				// Roll mode streams only the new samples (append=1): add them to
 				// the visible window, which holds one screen of 300 samples.
+				const fresh = f.append ? f.samples.slice() : null;
 				if (f.append) {
 					const prev = this.frame;
 					if (!prev || !prev.roll || prev.dt !== f.dt) return;  // wait for a full frame
 					f.samples = prev.samples.concat(f.samples).slice(-300);
 					f.n = f.samples.length;
 				}
+				recorder.add(f, fresh);
 				this.frameCount++;
 				this.frame = f;
 				this.stats = measure(f);
@@ -321,6 +331,42 @@ Alpine.data('dso', () => ({
 		}
 		this.snapshot = { ...this.frame, samples: this.frame.samples.slice() };
 		this.capturedAt = this.t('capturedAt', { time: new Date().toLocaleTimeString() });
+	},
+
+	// Recording -----------------------------------------------------------
+	async toggleRecording() {
+		if (recorder.active) {
+			recorder.stop();
+			clearInterval(this.recTimer);
+			this.updateRecStatus();
+			return;
+		}
+		if (!this.streaming) await this.setStream(true);
+		recorder.begin();
+		this.updateRecStatus();
+		this.recTimer = setInterval(() => this.updateRecStatus(), 500);
+	},
+
+	updateRecStatus() {
+		this.recOn = recorder.active;
+		this.recCount = recorder.count;
+		const s = Math.floor(recorder.duration);
+		const mm = String(Math.floor(s / 60)).padStart(2, '0');
+		const ss = String(s % 60).padStart(2, '0');
+		const n = recorder.count.toLocaleString(this.lang);
+		const kind = recorder.mode === 'roll' ? this.t('recGapless')
+			: recorder.mode === 'frames' ? this.t('recFrames', { n: recorder.segments }) : '';
+		this.recText = `${mm}:${ss} · ${n} ${this.t('recValues')}${kind ? ' · ' + kind : ''}`;
+	},
+
+	exportRecording() {
+		if (!recorder.count) return;
+		const url = URL.createObjectURL(new Blob([recorder.toCsv()], { type: 'text/csv' }));
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `dso138-recording-${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
+		a.click();
+		setTimeout(() => URL.revokeObjectURL(url), 1000);
 	},
 
 	exportCsv() {
