@@ -121,19 +121,44 @@ This file is copyright JYE Tech and not covered by the MIT license of this proje
 
 With the jumpers open, connect the same adapter and click **Connect** in the
 live view section of the flasher page. The waveform is streamed every 0.5 s and
-can be exported as CSV: **Capture** keeps the frame currently shown for the export while the live view keeps running. The remote control section below then operates every
+can be exported as CSV (see *Recording* below for longer recordings). The remote control section below then operates every
 setting of the DSO138: run/stop, timebase, trigger mode, edge and level,
 positions, measurements, trace color, device language and the signal
 generator. V/div and coupling are set by the slide switches and are shown.
 
-**Record** writes the incoming signal into one CSV (`time_s, volts, segment`)
-until stopped. In roll mode (Auto, 100 ms/div and slower) every sample is
-streamed once, so the recording is gap-free; roll frames carry the running
-sample index (`pos=`), which keeps the time axis exact even if a frame is lost
-on the line (the gap starts a new segment). Faster timebases record the
-triggered frames one after another, each as its own segment. The serial line
-carries about 2000 samples per second, which is why gap-free recording is
-limited to roll mode.
+### Recording
+
+The live view can record the signal over minutes into a single CSV file.
+
+1. On the device, set the trigger to **Auto** and the timebase to
+   **100 ms/div or slower**, so the status bar shows **ROLL**.
+2. In the live view, click **Record**. Streaming starts by itself; the status
+   next to the button shows duration, number of values and the mode, e.g.
+   `02:15 · 33,750 values · gap-free (roll)`.
+3. Click **Stop recording**, then **Save recording (CSV)**.
+
+The file has the columns `time_s, volts, segment`: the whole recording in one
+piece with a continuous time axis.
+
+| Timebase | Samples per second | Useful for signals up to about |
+| --- | --- | --- |
+| 100 ms/div | 250 | 25 Hz |
+| 200 ms/div | 125 | 12 Hz |
+| 1 s/div | 25 | 2 Hz |
+| 10 s/div | 2.5 | 0.2 Hz |
+
+Good for voltage curves, temperatures, charging voltage or slow sensor
+signals. The serial line carries about 2000 samples per second, so gap-free
+recording is limited to roll mode. With faster timebases the recording still
+works, but frame by frame with gaps in between; each frame becomes its own
+segment.
+
+Roll frames carry the running index of their first sample (`pos=`). If a
+frame gets lost on the line, the time axis stays exact and the gap starts a
+new segment.
+
+**Capture** is different: it keeps the frame currently shown for a quick CSV
+export of that single screen while the live view keeps running.
 
 Serial commands (115200 8N1, line based):
 
